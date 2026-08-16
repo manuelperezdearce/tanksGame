@@ -1,12 +1,18 @@
 /** @type {HTMLCanvasElement} */
 
-import { Bullet } from "./js/entities/bullet.js";
-import { Canon } from "./js/entities/canon.js";
 import { Player } from "./js/entities/player.js";
 import { Enemy } from "./js/entities/enemy.js";
+import { HUD } from "./js/entities/hud.js";
+import { Bullet } from "./js/entities/bullet.js";
+
+const debug = {
+    showHitboxes: false
+}
 
 const canvas = document.getElementById("gameCanvas");
 const context = canvas.getContext("2d");
+const backgroundImage = new Image()
+backgroundImage.src = "./assets/backgrounds/map_test.png"
 // Calcular posicion del Canvas respecto a DOM
 
 canvas.width = 800
@@ -20,17 +26,26 @@ const canvasBorderWidth = parseFloat(canvaStyle.borderLeftWidth)
 // Variables globales
 const keys = {}
 const mousePosition = {}
+
+// Colecciones
+let allies = []
 let bullets = []
 let enemies = []
-let enemiesKilled = 0
 
 // Iniciar Entidades
-const player = new Player(canvas)
-const canon = new Canon()
-const enemy = new Enemy()
-enemies = [enemy]
+const hud = new HUD()
+const player = new Player(canvas, true, true, 200, 300)
+allies.push(player)
 
 
+enemies.push(new Player(canvas, false, false, 500, 500))
+enemies.push(new Player(canvas, false, false, 100, 500))
+enemies.push(new Player(canvas, false, false, 300, 700))
+enemies.push(new Player(canvas, false, false, 600, 700))
+
+
+// Counters
+let enemiesKilled = 0
 
 function detectarTeclado() {
     window.addEventListener("keydown", (event) => {
@@ -46,49 +61,41 @@ function detectarMouse() {
     canvas.addEventListener("mousemove", (event) => {
 
         const rect = canvas.getBoundingClientRect();
-
         mousePosition.x = event.clientX - rect.left - canvasBorderWidth;
         mousePosition.y = event.clientY - rect.top - canvasBorderWidth;
+        player.mousePosition = mousePosition
 
     });
 }
 function detectarClick() {
     canvas.addEventListener("click", (event) => {
-        const bullet = new Bullet(canvas, canon)
-        bullets.push(bullet)
 
+        const shotData = player.shoot()
+        const bullet = new Bullet(canvas, shotData)
+        bullets.push(bullet)
     })
 }
 
 
 function hayColision(a, b) {
+
+    const aHitbox = a.getHitbox();
+    const bHitbox = b.getHitbox();
+
     return (
-        a.position.x < b.position.x + b.dimensions.w &&
-        a.position.x + a.dimensions.w > b.position.x &&
-        a.position.y < b.position.y + b.dimensions.h &&
-        a.position.y + a.dimensions.h > b.position.y
+        aHitbox.x < bHitbox.x + bHitbox.w &&
+        aHitbox.x + aHitbox.w > bHitbox.x &&
+        aHitbox.y < bHitbox.y + bHitbox.h &&
+        aHitbox.y + aHitbox.h > bHitbox.y
     );
 }
 
+function checkBulletVsEnemy() {
 
-function update(deltaTime) {
+    bullets.forEach((bullet) => {
 
-    player.moverJugador(deltaTime, keys)
+        enemies.forEach((enemy) => {
 
-    player.calcularPlayerCenter()
-    canon.update(mousePosition, player)
-
-    enemies.forEach((enemy, index) => {
-        enemy.update(deltaTime)
-    })
-
-    bullets.forEach((bullet, index) => {
-        bullet.update(deltaTime);
-    })
-
-    /// Comprobar Colisiones
-    bullets.forEach((bullet, index) => {
-        enemies.forEach((enemy, index) => {
             if (
                 bullet.isAlive &&
                 enemy.isAlive &&
@@ -96,66 +103,123 @@ function update(deltaTime) {
             ) {
                 enemy.takeDamage(bullet.damage);
                 bullet.isAlive = false;
+
                 if (!enemy.isAlive) {
-                    enemiesKilled += 1;
+                    enemiesKilled++;
                 }
             }
-        })
+        });
+    });
+}
+
+function cleanupEntities() {
+    bullets = bullets.filter((bullet) => bullet.isAlive);
+    enemies = enemies.filter((enemy) => enemy.isAlive);
+}
+
+
+function drawHitbox(entity) {
+
+    const hitbox = entity.getHitbox()
+
+    context.save()
+
+    context.strokeStyle = "#00ff00"
+    context.lineWidth = 2
+
+    context.strokeRect(
+        hitbox.x,
+        hitbox.y,
+        hitbox.w,
+        hitbox.h
+    )
+
+    context.restore()
+}
+function drawHitboxes() {
+
+    if (!debug.showHitboxes) {
+        return
+    }
+
+    drawHitbox(player)
+
+    enemies.forEach((enemy) => {
+        drawHitbox(enemy)
     })
 
+    bullets.forEach((bullet) => {
+        drawHitbox(bullet)
+    })
+}
+
+function drawBackground() {
+
+    context.drawImage(
+        backgroundImage,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    )
+}
+///// ACTUALIZAR ////////
+
+function update(deltaTime) {
 
 
-    bullets = bullets.filter((bullet) => bullet.isAlive === true)
-    enemies = enemies.filter((enemy) => enemy.isAlive === true)
+    player.update(deltaTime, keys, mousePosition);
+
+    enemies.forEach((enemy) => {
+        enemy.update(deltaTime, "", "", player);
+    });
+
+    bullets.forEach((bullet) => {
+        bullet.update(deltaTime);
+    });
+
+    checkBulletVsEnemy();
+
+    cleanupEntities();
+
+    hud.update(
+        player.life,
+        enemiesKilled,
+        enemiesKilled * 10,
+        mousePosition,
+        enemies.length,
+        allies.length
+    )
 
 }
 
 function draw() {
-    player.dibujarJugador(context)
-    canon.dibujarCanon(context)
 
-    bullets.forEach((bullet, index) => {
-        bullet.dibujarBala(context)
-    })
+    // CAPA 1 - Mundo
+    drawBackground()
 
-    enemies.forEach((enemy, index) => {
+    // CAPA 2 - Entidades
+    player.draw(context)
+
+    enemies.forEach((enemy) => {
         enemy.draw(context)
     })
 
-    dibujarPuntero()
-    drawHUD()
-}
+    bullets.forEach((bullet) => {
+        bullet.draw(context)
+    })
 
-function drawHUD() {
-    context.fillStyle = "white";
-    context.font = "20px Arial";
-    context.fillText(
-        `Enemies killed: ${enemiesKilled}`,
-        20,
-        30
-    );
-}
+    // CAPA 3 - Debug
+    drawHitboxes()
 
+    // CAPA 4 - Interfaz
+    hud.draw(canvas, context)
+}
 
 function clear() {
     context.clearRect(0, 0, canvas.width, canvas.height)
 }
 
-function dibujarPuntero() {
-
-    context.beginPath()
-    context.fillStyle = "#e60bc931"
-    context.arc(
-        mousePosition.x,
-        mousePosition.y,
-        20,
-        0,
-        2 * Math.PI,
-        true
-
-    )
-    context.fill()
-}
 
 ///Loop
 
@@ -174,12 +238,15 @@ function gameLoop(currentTime) {
     clear()
     //Draw
     draw()
-    /// averiguar que está presionado el usuario
-
 
     requestAnimationFrame(gameLoop);
+
+
 }
+
 detectarTeclado()
 detectarMouse()
 detectarClick()
 requestAnimationFrame(gameLoop);
+
+

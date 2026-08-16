@@ -1,28 +1,25 @@
 
 export class Bullet {
 
-    constructor(canvas, canon) {
+    constructor(canvas, shotData) {
 
         this.dimensions = {
             w: 6,
             h: 10
         }
-        this.width = 6
-        this.height = 10
-        this.speed = 500
-        this.color = "#ebfc00"
-        this.angle = canon.angle
-        this.direction = {
-            x: canon.direction.x,
-            y: canon.direction.y
+        this.dimensions = {
+            w: 6, h: 10
         }
-        this.startPosition = {
-            x: canon.exitPosition.x,
-            y: canon.exitPosition.y
+        this.speed = 500 + shotData.speedPlus
+        this.color = "#ebfc00"
+        this.angle = shotData.angle
+        this.direction = {
+            x: shotData.direction.x,
+            y: shotData.direction.y
         }
         this.position = {
-            x: this.startPosition.x,
-            y: this.startPosition.y
+            x: shotData.position.x,
+            y: shotData.position.y
         }
         this.canvas = canvas
         this.isAlive = true
@@ -39,17 +36,17 @@ export class Bullet {
         this.estaFueraDelCanvas()
     }
 
-    dibujarBala(context) {
+    draw(context) {
 
         context.save();
         context.translate(this.position.x, this.position.y);
         context.rotate(this.angle);
         context.fillStyle = this.color;
         context.fillRect(
-            0,
-            -this.width / 2,
-            this.height,
-            this.width
+            -this.dimensions.h / 2,
+            -this.dimensions.w / 2,
+            this.dimensions.h,
+            this.dimensions.w
         );
         context.restore();
     }
@@ -69,5 +66,13 @@ export class Bullet {
         }
     }
 
+    getHitbox() {
+        return {
+            x: this.position.x - this.dimensions.w / 2,
+            y: this.position.y - this.dimensions.h / 2,
+            w: this.dimensions.w,
+            h: this.dimensions.h
+        };
+    }
 }
 
