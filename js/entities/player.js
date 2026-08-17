@@ -65,12 +65,25 @@ export class Player {
     }
 
     drawSelf(context) {
+        //// Aliado o enemigo
+
+        if (this.isAlly) {
+            this.team = "ally"
+        } else {
+            this.team = "enemy"
+        }
+
+        //// Point on Player
         context.beginPath()
-        context.fillStyle = "#ff0000"
+        if (this.team == "ally") {
+            context.fillStyle = " #1a28aa"
+        }
+        else { context.fillStyle = "#ff0000" }
+
         context.arc(
             this.position.x,
             this.position.y,
-            10,
+            5,
             0,
             2 * Math.PI,
             true
@@ -79,14 +92,6 @@ export class Player {
 
         context.fillStyle = "white";
         context.font = `10px Arial`;
-
-        //// Aliado o enemigo
-
-        if (this.isAlly) {
-            this.team = "Ally"
-        } else {
-            this.team = "Enemy"
-        }
 
         //// HUMAN O CPU
 
