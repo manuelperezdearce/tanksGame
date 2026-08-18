@@ -7,6 +7,7 @@ export class HUD {
         this.mousePosition = { x: 0, y: 0 }
         this.qEnemies = ""
         this.qAllies = ""
+        this.bullets = ""
 
         this.stage = {
             id: "",
@@ -18,7 +19,7 @@ export class HUD {
 
     /// UPDATE ///
 
-    update(playerLife, enemiesKilled, score, mousePosition, qEnemies, qAllies, stage) {
+    update(playerLife, enemiesKilled, score, mousePosition, qEnemies, qAllies, stage, bullets) {
         this.enemiesKilled = enemiesKilled
         this.playerLife = playerLife
         this.score = score
@@ -28,6 +29,7 @@ export class HUD {
         this.stage.id = stage.id
         this.stage.remainingTime = stage.remainingTime.toFixed(1)
         this.stage.status = stage.status
+        this.bullets = bullets
     }
 
     /// DRAW ////
@@ -86,6 +88,12 @@ export class HUD {
             90
         );
 
+        context.fillText(
+            `Bullets: ${this.bullets.length}`,
+            canvas.width - 210,
+            120
+        );
+
 
         this.dibujarPuntero(context)
     }
@@ -93,7 +101,7 @@ export class HUD {
     dibujarPuntero(context) {
 
         context.beginPath()
-        context.fillStyle = "#e60bc931"
+        context.fillStyle = "#e60bc9b6"
         context.arc(
             this.mousePosition.x,
             this.mousePosition.y,

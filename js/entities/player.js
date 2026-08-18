@@ -2,7 +2,7 @@ import { Tank } from "./tank.js"
 import { Canon } from "./canon.js"
 
 export class Player {
-    constructor(canvas, isAlly, isHuman, positionX, positionY) {
+    constructor(isAlly, isHuman, positionX, positionY) {
         this.isAlly = isAlly
         this.team = ""
         this.isHuman = isHuman
@@ -17,7 +17,6 @@ export class Player {
         this.rotationSpeed = this.tank.rotationSpeed
         this.angle = - Math.PI / 2
         this.isAlive = true
-        this.canvas = canvas
         this.fireCooldown = 1.2
         this.timeUntilNextShot = 0
     }
@@ -57,14 +56,14 @@ export class Player {
         )
     }
 
-    draw(context) {
+    draw(context, canvas) {
 
-        this.tank.draw(context)
-        this.canon.draw(context)
-        this.drawSelf(context)
+        this.tank.draw(context, canvas)
+        this.canon.draw(context, canvas)
+        this.drawSelf(context, canvas)
     }
 
-    drawSelf(context) {
+    drawSelf(context, canvas) {
         //// Aliado o enemigo
 
         if (this.isAlly) {
@@ -167,7 +166,6 @@ export class Player {
         this.position.x += directionX * desplazamiento;
         this.position.y += directionY * desplazamiento;
 
-        this.mantenerDentroDelCanvas();
     }
 
     aim(mousePosition) {
@@ -301,35 +299,8 @@ export class Player {
             directionY *
             desplazamiento
 
-
-        this.mantenerDentroDelCanvas()
     }
 
-    mantenerDentroDelCanvas() {
-
-        const halfWidth = this.dimensions.w / 2
-        const halfHeight = this.dimensions.h / 2
-
-        // Izquierda
-        if (this.position.x < halfWidth) {
-            this.position.x = halfWidth
-        }
-
-        // Derecha
-        if (this.position.x > this.canvas.width - halfWidth) {
-            this.position.x = this.canvas.width - halfWidth
-        }
-
-        // Arriba
-        if (this.position.y < halfHeight) {
-            this.position.y = halfHeight
-        }
-
-        // Abajo
-        if (this.position.y > this.canvas.height - halfHeight) {
-            this.position.y = this.canvas.height - halfHeight
-        }
-    }
     getHitbox() {
         return {
             x: this.position.x - this.dimensions.w / 2,

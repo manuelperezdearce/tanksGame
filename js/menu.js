@@ -1,8 +1,19 @@
 export class Menu {
     constructor() {
         this.options = [
-            "New Game",
-            "Score"
+            {
+                id: 1,
+                menuName: "New Game",
+                appState: "game",
+                isAvailable: true
+            },
+            {
+                id: 2,
+                menuName: "Score",
+                appState: "score",
+                isAvailable: true
+            },
+
         ]
 
         this.selectedIndex = 0
@@ -13,10 +24,15 @@ export class Menu {
     update(keys) {
 
         if (this.canMove) {
-
             if (keys.ArrowDown || keys.s) {
 
                 this.selectedIndex++
+                if (this.selectedIndex >= this.options.length) {
+                    this.selectedIndex = 0
+                }
+                if (!this.options[this.selectedIndex].isAvailable) {
+                    this.selectedIndex++
+                }
 
                 this.canMove = false
             }
@@ -24,6 +40,13 @@ export class Menu {
             if (keys.ArrowUp || keys.w) {
 
                 this.selectedIndex--
+
+                if (this.selectedIndex < 0) {
+                    this.selectedIndex = this.options.length - 1
+                }
+                if (!this.options[this.selectedIndex].isAvailable) {
+                    this.selectedIndex--
+                }
 
                 this.canMove = false
             }
@@ -38,12 +61,8 @@ export class Menu {
             this.canMove = true
         }
 
-        if (this.selectedIndex >= this.options.length) {
-            this.selectedIndex = 0
-        }
-
-        if (this.selectedIndex < 0) {
-            this.selectedIndex = this.options.length - 1
+        if (keys[" "]) {
+            return this.options[this.selectedIndex]
         }
     }
 
@@ -65,13 +84,18 @@ export class Menu {
             const y = 350 + index * 50
 
             if (index === this.selectedIndex) {
-                context.fillStyle = "yellow"
+                context.fillStyle = "#e7e408"
             } else {
-                context.fillStyle = "white"
+                if (option.isAvailable) {
+                    context.fillStyle = "#fff"
+                } else {
+                    context.fillStyle = "#414141"
+                }
+
             }
 
             context.fillText(
-                option,
+                option.menuName,
                 canvas.width / 2 - 60,
                 y
             )

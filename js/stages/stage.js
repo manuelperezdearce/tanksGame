@@ -1,5 +1,5 @@
 export class Stage {
-    constructor(stage, canvas) {
+    constructor(stage) {
         this.id = stage.id
         this.totalEnemies = stage.totalEnemies
         this.spawnedEnemies = 0
@@ -8,17 +8,35 @@ export class Stage {
         this.backgroundImage = new Image()
         this.backgroundImage.src = stage.bgImageSRC
         this.remainingTime = this.timeLimit
-        this.canvas = canvas
         this.status = "running"  //// ready, running, finished, completed, failed
+
+        this.debugCounter = 0
+
     }
 
     /// Actualizar
     update(deltaTime, playerLife, enemiesLength) {
 
+        // this.debugCounter++
+
+        // if (this.debugCounter === 100) {
+        //     debugger
+        // }
+
+        // console.log(
+        //     this.debugCounter,
+        //     "Stage status:",
+        //     this.status,
+        //     "elapsed:",
+        //     this.elapsedTime
+        // )
+
         /// Runing
 
         if (this.status === "running") {
             this.running(deltaTime, playerLife, enemiesLength)
+
+
         }
 
         if (this.status === "finished") {
@@ -27,14 +45,14 @@ export class Stage {
 
     }
     /// Dibujar
-    draw(context) {
+    draw(context, canvas) {
 
         context.drawImage(
             this.backgroundImage,
             0,
             0,
-            this.canvas.width,
-            this.canvas.height
+            canvas.width,
+            canvas.height
         )
     }
 
@@ -51,7 +69,10 @@ export class Stage {
             this.remainingTime = 0
             this.status = "finished"
         }
-        if (enemiesLength === 0) {
+        if (
+            this.spawnedEnemies >= this.totalEnemies &&
+            enemiesLength === 0
+        ) {
             this.status = "finished"
         }
 

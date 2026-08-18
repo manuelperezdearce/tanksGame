@@ -1,4 +1,4 @@
-// import { Game } from "./game.js";
+import { Game } from "./game.js";
 import { Menu } from "./menu.js";
 
 export class App {
@@ -9,49 +9,76 @@ export class App {
 
         this.keys = {}
         this.mousePosition = { x: 0, y: 0 }
+        this.mouseClicked = false
 
         this.state = "menu"
         this.menu = new Menu()
         this.game = null
 
         this.previousTime = null
+        this.deltaTime = null
 
-        /// INPUT
+        /// INPUT LAUNCH
         this.detectarTeclado()
+        this.detectarClick()
+        this.detectarMouse()
     }
 
-    update() {
+    update(deltaTime) {
+
+
         if (this.state === "menu") {
-            this.menu.update(this.keys)
+
+            const selectedOption =
+                this.menu.update(this.keys)
+
+            if (selectedOption) {
+
+                if (selectedOption.appState === "game") {
+                    this.game = new Game()
+                }
+
+                this.state = selectedOption.appState
+            }
         }
+
         if (this.state === "game") {
-            // this.game.update(this.canvas)
+
+            this.game.update(
+                deltaTime,
+                this.keys,
+                this.mousePosition,
+                this.mouseClicked
+            )
         }
+
+        this.mouseClicked = false
     }
 
     draw() {
-        this.selfDebug()
+
         if (this.state === "menu") {
             this.menu.draw(this.context, this.canvas)
         }
 
         if (this.state === "game") {
-            // this.game.draw(this.context)
+            this.game.draw(this.context, this.canvas)
         }
+
+        this.selfDebug()
     }
 
     appLoop(currentTime) {
-
 
         /// Calcular deltaTime
         if (this.previousTime == null) {
             this.previousTime = currentTime
         }
-        let deltaTime = (currentTime - this.previousTime) / 1000
+        this.deltaTime = (currentTime - this.previousTime) / 1000
         this.previousTime = currentTime
 
         //Update
-        this.update(deltaTime)
+        this.update(this.deltaTime)
         //Clear
         this.clear()
         //Draw
@@ -86,6 +113,11 @@ export class App {
             20,
             this.canvas.height - 20
         );
+        this.context.fillText(
+            `fps : ${(1 / this.deltaTime).toFixed(1)}`,
+            20,
+            this.canvas.height - 40
+        );
     }
 
     /// UTILIDADES
@@ -102,22 +134,29 @@ export class App {
 
     }
     detectarMouse() {
-        canvas.addEventListener("mousemove", (event) => {
-
-            // const rect = canvas.getBoundingClientRect();
-            // mousePosition.x = event.clientX - rect.left - canvasBorderWidth;
-            // mousePosition.y = event.clientY - rect.top - canvasBorderWidth;
-            // player.mousePosition = mousePosition
-
+        this.canvas.addEventListener("mousemove", (event) => {
+            this.mousePosition = this.getMousePosition(event)
         });
     }
     detectarClick() {
-        canvas.addEventListener("click", (event) => {
-
-            // const shotData = player.shoot()
-            // const bullet = new Bullet(canvas, shotData)
-            // bullets.push(bullet)
+        this.canvas.addEventListener("click", (event) => {
+            this.mousePosition = this.getMousePosition(event)
+            this.mouseClicked = true
         })
+    }
+
+    getMousePosition(event) {
+
+        const rect = this.canvas.getBoundingClientRect()
+        const style = getComputedStyle(this.canvas)
+
+        const borderLeft = parseFloat(style.borderLeftWidth)
+        const borderTop = parseFloat(style.borderTopWidth)
+
+        return {
+            x: event.clientX - rect.left - borderLeft,
+            y: event.clientY - rect.top - borderTop
+        }
     }
 
 }
