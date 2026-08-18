@@ -1,11 +1,11 @@
 /** @type {HTMLCanvasElement} */
 
-import { stages } from "/js/stages/stagesDATA.js";
-import { Player } from "/js/entities/player.js";
-import { Enemy } from "/js/entities/enemy.js";
-import { HUD } from "/js/entities/hud.js";
-import { Bullet } from "/js/entities/bullet.js";
-import { Stage } from "/js/stages/stage.js";
+import { stages } from "./js/stages/stagesDATA.js";
+import { Player } from "./js/entities/player.js";
+import { Enemy } from "./js/entities/enemy.js";
+import { HUD } from "./js/entities/hud.js";
+import { Bullet } from "./js/entities/bullet.js";
+import { Stage } from "./js/stages/stage.js";
 import { Collision } from "./collision.js";
 
 const debug = {
@@ -77,7 +77,6 @@ export class Game {
             ) {
                 bullet.destroy()
             }
-
 
         });
 
