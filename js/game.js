@@ -1,34 +1,34 @@
 /** @type {HTMLCanvasElement} */
 
-import { stages } from "./js/stages/stagesDATA.js";
-import { Player } from "./js/entities/player.js";
-import { Enemy } from "./js/entities/enemy.js";
-import { HUD } from "./js/entities/hud.js";
-import { Bullet } from "./js/entities/bullet.js";
-import { Stage } from "./js/stages/stage.js";
-import { Collision } from "./collision.js";
+import { stages } from "/js/stages/stagesDATA.js";
+import { Player } from "/js/entities/player.js";
+import { Enemy } from "/js/entities/enemy.js";
+import { HUD } from "/js/entities/hud.js";
+import { Bullet } from "/js/entities/bullet.js";
+import { Stage } from "/js/stages/stage.js";
+import { Collision } from "/js/collision.js";
+import { EnterScore } from "./enterScore.js";
 
 const debug = {
     showHitboxes: false
 }
 
-// Calcular posicion del Canvas respecto a DOM
-
-// const canvaStyle = getComputedStyle(canvas)
-// const canvasBorderWidth = parseFloat(canvaStyle.borderLeftWidth)
-
 export class Game {
     constructor() {
 
-        // Iniciar Entidades
 
-        this.stage = new Stage(stages[1])
+        this.currentStageid = 1
+        // Iniciar Entidades
+        this.stage = new Stage(stages[this.currentStageid])
         this.hud = new HUD()
         this.player = new Player(true, true, 200, 300)
         this.collision = new Collision()
         // allies.push(player)
 
         this.enemiesKilled = 0
+        this.enterScore = new EnterScore()
+        this.score = 100
+        this.status = "running" /// running, gameOver, completed, enterScore, finished
 
         // Colecciones
         this.allies = []
@@ -42,63 +42,96 @@ export class Game {
 
     update(deltaTime, keys, mousePosition, mouseClicked) {
 
-        this.stage.update(deltaTime, this.player.life, this.enemies.length)
+        if (this.status === "running") {
+            this.checkStageStatus()
 
-        this.player.update(deltaTime, keys, mousePosition);
+            this.stage.update(
+                deltaTime,
+                this.player.life,
+                this.enemies.length)
 
-        if (mouseClicked) {
 
-            const shotData = this.player.shoot()
+            this.player.update(deltaTime, keys, mousePosition);
 
-            const bullet = new Bullet(
-                shotData
-            )
+            if (mouseClicked) {
 
-            this.bullets.push(bullet)
-        }
+                const shotData = this.player.shoot()
 
-        this.enemies.forEach((enemy) => {
-            enemy.update(deltaTime, "", "", this.player);
-        });
+                const bullet = new Bullet(
+                    shotData
+                )
 
-        this.bullets.forEach((bullet) => {
-            bullet.update(deltaTime);
-
-            const bounds = this.collision.checkWorldBounds(
-                bullet,
-                this.worldBounds
-            )
-
-            if (
-                bounds.left ||
-                bounds.right ||
-                bounds.top ||
-                bounds.bottom
-            ) {
-                bullet.destroy()
+                this.bullets.push(bullet)
             }
 
-        });
+            this.enemies.forEach((enemy) => {
+                enemy.update(deltaTime, "", "", this.player);
+            });
+
+            this.bullets.forEach((bullet) => {
+                bullet.update(deltaTime);
+            });
+
+            /// COLISIONES
+
+            /// CON EL MAPA
+
+            /// player
+
+            const bounds = this.collision.checkWorldBounds(
+                this.player,
+                this.worldBounds
+            )
+            if (bounds.left || bounds.right || bounds.top || bounds.bottom) {
+                this.player.correctWorldCollision(
+                    bounds,
+                    this.worldBounds
+                )
+            }
+
+            /// bullets
+            this.bullets.forEach((bullet) => {
+                const bounds = this.collision.checkWorldBounds(
+                    bullet,
+                    this.worldBounds
+                )
+
+                if (
+                    bounds.left ||
+                    bounds.right ||
+                    bounds.top ||
+                    bounds.bottom
+                ) {
+                    bullet.destroy()
+                }
+
+            });
 
 
-        /// COLISIONES
+
+            this.checkBulletVsEnemy();
+
+            this.cleanupEntities();
+
+            this.hud.update(
+                this.player.life,
+                this.enemiesKilled,
+                this.enemiesKilled * 10,
+                mousePosition,
+                this.enemies.length,
+                this.allies.length,
+                this.stage,
+                this.bullets
+            )
+
+        }
+
+        if (this.status === "gameOver" || this.status === "completed") {
+            this.enterScore.update(keys, this.score, this.status)
+        }
 
 
 
-        this.checkBulletVsEnemy();
-
-        this.cleanupEntities();
-
-        this.hud.update(
-            this.player.life,
-            this.enemiesKilled,
-            this.enemiesKilled * 10,
-            mousePosition,
-            this.enemies.length,
-            this.allies.length,
-            this.stage,
-            this.bullets
-        )
     }
 
     /// DIBUJAR
@@ -129,10 +162,16 @@ export class Game {
         if (debug) {
             this.drawSelfDebug(context)
         }
+
+        if (this.status === "gameOver" || this.status === "completed") {
+            this.enterScore.draw(context, canvas)
+        }
+
+
     }
 
     drawSelfDebug(context) {
-        this.drawHitboxes()
+
     }
 
     checkBulletVsEnemy() {
@@ -162,40 +201,41 @@ export class Game {
         this.enemies = this.enemies.filter((enemy) => enemy.isAlive);
 
     }
-    drawHitbox(entity) {
 
-        const hitbox = entity.getHitbox()
+    /// ACTIONS
 
-        context.save()
-
-        context.strokeStyle = "#00ff00"
-        context.lineWidth = 2
-
-        context.strokeRect(
-            hitbox.x,
-            hitbox.y,
-            hitbox.w,
-            hitbox.h
-        )
-
-        context.restore()
+    nextStage() {
+        const nextStageId = this.currentStageid + 1
+        if (stages[nextStageId]) {
+            this.currentStageid = nextStageId
+            this.loadStage(this.currentStageid)
+        }
+        else {
+            this.status = "completed"
+        }
     }
 
-    drawHitboxes() {
+    loadStage(stageId) {
+        this.stage = new Stage(stages[stageId])
 
-        if (!debug.showHitboxes) {
-            return
+        this.enemies = []
+        this.bullets = []
+    }
+
+    gameOver() {
+        this.status = "gameOver"
+    }
+
+    /// UTILIDADES
+
+    checkStageStatus() {
+
+        if (this.stage.status === "completed") {
+            this.nextStage()
         }
-
-        drawHitbox(this.player)
-
-        this.enemies.forEach((enemy) => {
-            drawHitbox(enemy)
-        })
-
-        this.bullets.forEach((bullet) => {
-            drawHitbox(bullet)
-        })
+        if (this.stage.status === "failed") {
+            this.gameOver()
+        }
     }
 
 }

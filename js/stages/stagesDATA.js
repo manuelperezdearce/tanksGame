@@ -3,9 +3,9 @@ export const stages = {
     1: {
         id: 1,
         name: "First Contact",
-        bgImageSRC: "./assets/backgrounds/map_test.png",
+        bgImageSRC: "./assets/backgrounds/bg_stage1.png",
         totalEnemies: 10,
-        timeLimit: 60,
+        timeLimit: 3,
 
         events: [
             {
@@ -38,9 +38,9 @@ export const stages = {
     2: {
         id: 2,
         name: "Crossfire",
-        bgImageSRC: "./assets/backgrounds/map_test.png",
+        bgImageSRC: "./assets/backgrounds/bg_stage2.png",
         totalEnemies: 15,
-        timeLimit: 75,
+        timeLimit: 4,
 
         events: [
             {

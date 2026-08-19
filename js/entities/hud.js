@@ -11,6 +11,7 @@ export class HUD {
 
         this.stage = {
             id: "",
+            name: "",
             remainingTime: "",
             status: ""
         }
@@ -29,6 +30,7 @@ export class HUD {
         this.stage.id = stage.id
         this.stage.remainingTime = stage.remainingTime.toFixed(1)
         this.stage.status = stage.status
+        this.stage.name = stage.name
         this.bullets = bullets
     }
 
@@ -75,6 +77,12 @@ export class HUD {
             `Stage ${this.stage.id}`,
             canvas.width / 2,
             30
+        );
+
+        context.fillText(
+            `${this.stage.name}`,
+            canvas.width / 2,
+            60
         );
 
         context.fillText(

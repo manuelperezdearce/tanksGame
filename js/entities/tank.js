@@ -6,7 +6,7 @@ export class Tank {
         this.height = 53
         this.hp = 3
 
-        this.speed = 50
+        this.speed = 100
         this.rotationSpeed = 1
 
         this.centerOf = {

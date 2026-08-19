@@ -1,6 +1,7 @@
 export class Stage {
     constructor(stage) {
         this.id = stage.id
+        this.name = stage.name
         this.totalEnemies = stage.totalEnemies
         this.spawnedEnemies = 0
         this.timeLimit = stage.timeLimit
@@ -17,26 +18,10 @@ export class Stage {
     /// Actualizar
     update(deltaTime, playerLife, enemiesLength) {
 
-        // this.debugCounter++
-
-        // if (this.debugCounter === 100) {
-        //     debugger
-        // }
-
-        // console.log(
-        //     this.debugCounter,
-        //     "Stage status:",
-        //     this.status,
-        //     "elapsed:",
-        //     this.elapsedTime
-        // )
-
         /// Runing
 
         if (this.status === "running") {
             this.running(deltaTime, playerLife, enemiesLength)
-
-
         }
 
         if (this.status === "finished") {

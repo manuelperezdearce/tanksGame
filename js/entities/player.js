@@ -309,6 +309,28 @@ export class Player {
             h: this.dimensions.h
         };
     }
+
+    correctWorldCollision(bounds, worldBounds) {
+
+        const halfWidth = this.dimensions.w / 2
+        const halfHeight = this.dimensions.h / 2
+
+        if (bounds.left) {
+            this.position.x = halfWidth
+        }
+
+        if (bounds.right) {
+            this.position.x = worldBounds.width - halfWidth
+        }
+
+        if (bounds.top) {
+            this.position.y = halfHeight
+        }
+
+        if (bounds.bottom) {
+            this.position.y = worldBounds.height - halfHeight
+        }
+    }
 }
 
 

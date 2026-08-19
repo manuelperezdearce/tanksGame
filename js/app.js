@@ -1,5 +1,5 @@
-import { Game } from "./game.js";
-import { Menu } from "./menu.js";
+import { Game } from "/js/game.js";
+import { Menu } from "/js/menu.js";
 
 export class App {
     constructor(canvas) {
