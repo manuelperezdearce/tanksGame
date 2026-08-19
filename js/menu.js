@@ -1,14 +1,24 @@
 export class Menu {
     constructor() {
+        this.canvas = null
+        this.dimensions = { w: 300, h: 400 }
+        this.position = { x: 0, y: 0 }
+
         this.options = [
             {
                 id: 1,
-                menuName: "New Game",
-                appState: "game",
-                isAvailable: true
+                menuName: "Continue",
+                appState: "continue game",
+                isAvailable: false
             },
             {
                 id: 2,
+                menuName: "New Game",
+                appState: "new game",
+                isAvailable: true
+            },
+            {
+                id: 3,
                 menuName: "Score",
                 appState: "score",
                 isAvailable: true
@@ -18,19 +28,25 @@ export class Menu {
 
         this.selectedIndex = 0
         this.canMove = true
+        this.availableOptions = []
     }
 
 
-    update(keys) {
+    update(keys, canvas) {
+        /// Ubicación en el canvas
+        this.position = { x: canvas.width / 2, y: canvas.height / 3 * 2 }
+
+
+        this.availableOptions = this.options.filter(ele => ele.isAvailable)
 
         if (this.canMove) {
             if (keys.ArrowDown || keys.s) {
 
                 this.selectedIndex++
-                if (this.selectedIndex >= this.options.length) {
+                if (this.selectedIndex >= this.availableOptions.length) {
                     this.selectedIndex = 0
                 }
-                if (!this.options[this.selectedIndex].isAvailable) {
+                if (!this.availableOptions[this.selectedIndex].isAvailable) {
                     this.selectedIndex++
                 }
 
@@ -42,9 +58,9 @@ export class Menu {
                 this.selectedIndex--
 
                 if (this.selectedIndex < 0) {
-                    this.selectedIndex = this.options.length - 1
+                    this.selectedIndex = this.availableOptions.length - 1
                 }
-                if (!this.options[this.selectedIndex].isAvailable) {
+                if (!this.availableOptions[this.selectedIndex].isAvailable) {
                     this.selectedIndex--
                 }
 
@@ -62,26 +78,42 @@ export class Menu {
         }
 
         if (keys[" "]) {
-            return this.options[this.selectedIndex]
+
+            return this.availableOptions[this.selectedIndex]
         }
     }
 
     draw(context, canvas) {
 
+        const objectPosition = { x: 0, y: 0 }
+        objectPosition.x = this.position.x - this.dimensions.w / 2
+        objectPosition.y = this.position.y - this.dimensions.h / 2
+
+        context.fillStyle = "#1818189c"
+        context.fillRect(
+            objectPosition.x,
+            objectPosition.y,
+            this.dimensions.w,
+            this.dimensions.h
+        )
+
+        context.save()
+        context.translate(objectPosition.x, objectPosition.y)
+
         context.fillStyle = "white"
-        context.font = "40px Arial"
+        context.font = "bold 40px Arial"
 
         context.fillText(
-            "TANKS",
-            canvas.width / 2 - 70,
-            200
+            "Main Menu",
+            this.dimensions.w / 2 - 100,
+            this.dimensions.h / 5
         )
 
         context.font = "24px Arial"
 
-        this.options.forEach((option, index) => {
+        this.availableOptions.forEach((option, index) => {
 
-            const y = 350 + index * 50
+            const y = this.dimensions.h / 2 + index * 50
 
             if (index === this.selectedIndex) {
                 context.fillStyle = "#e7e408"
@@ -96,22 +128,38 @@ export class Menu {
 
             context.fillText(
                 option.menuName,
-                canvas.width / 2 - 60,
+                this.dimensions.w / 2 - 60,
                 y
             )
         })
 
-        this.selfDebug(context, canvas)
+        context.fillStyle = "#611107";
+        context.font = "bold 14px Arial"
+        context.fillText(
+            `Use "W" or "S" to Move`,
+            10,
+            this.dimensions.h - 30
+        )
+        context.fillText(
+            `Press "Espace" to Select`,
+            10,
+            this.dimensions.h - 10
+        )
+        // this.selfDebug(context)
+
+        context.restore()
+
+
     }
     /// UTILIDADES
-    selfDebug(context, canvas) {
+    selfDebug(context) {
         context.fillStyle = "white";
         context.font = `10px Arial`;
 
         context.fillText(
             `menuIndex : ${this.selectedIndex}`,
-            canvas.width / 2 - 70,
-            220
+            0,
+            this.dimensions.h
         );
     }
 }

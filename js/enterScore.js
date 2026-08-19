@@ -25,6 +25,11 @@ export class EnterScore {
         this.playerScore = score
         this.gameStatus = gameStatus
         this.enterPlayerName(keys)
+
+        if (keys["h"]) {
+            return (this.playerName.join(""))
+        }
+
     }
     draw(context, canvas) {
 
@@ -103,7 +108,7 @@ export class EnterScore {
 
     enterPlayerName(keys) {
 
-        //// Mover Lateralmente 
+        //// Mover Lateralmente a través de playerName
 
         if (this.canMove) {
             if (keys.d) {

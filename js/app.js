@@ -1,5 +1,6 @@
 import { Game } from "/js/game.js";
 import { Menu } from "/js/menu.js";
+import { Score } from "/js/score.js";
 
 export class App {
     constructor(canvas) {
@@ -11,8 +12,9 @@ export class App {
         this.mousePosition = { x: 0, y: 0 }
         this.mouseClicked = false
 
-        this.state = "menu"
+        this.state = "menu" /// menu score playing pause
         this.menu = new Menu()
+        this.score = new Score()
         this.game = null
 
         this.previousTime = null
@@ -30,26 +32,57 @@ export class App {
         if (this.state === "menu") {
 
             const selectedOption =
-                this.menu.update(this.keys)
+                this.menu.update(this.keys, this.canvas)
 
             if (selectedOption) {
 
-                if (selectedOption.appState === "game") {
+                if (selectedOption.appState === "new game") {
                     this.game = new Game()
+                    this.state = "playing"
+                }
+                if (selectedOption.appState === "score") {
+                    this.state = "score"
                 }
 
-                this.state = selectedOption.appState
+                if (selectedOption.appState === "continue game" && this.game !== null) {
+                    this.state = "playing"
+                }
             }
         }
 
-        if (this.state === "game") {
+        if (this.state === "playing" && this.game !== null) {
 
-            this.game.update(
+            const gameAction = this.game.update(
                 deltaTime,
                 this.keys,
                 this.mousePosition,
                 this.mouseClicked
             )
+
+            if (gameAction?.action === "saveScore") {
+
+                this.score.addScore(
+                    gameAction.name,
+                    gameAction.score
+                )
+
+                this.game = null
+                this.state = "score"
+            }
+        }
+
+        if (this.state === "score") {
+
+            this.score.update(
+                deltaTime,
+                this.keys,
+                this.mousePosition,
+                this.mouseClicked
+            )
+        }
+
+        if (this.keys.Escape && this.state !== "menu") {
+            this.state = "menu"
         }
 
         this.mouseClicked = false
@@ -61,11 +94,15 @@ export class App {
             this.menu.draw(this.context, this.canvas)
         }
 
-        if (this.state === "game") {
+        if (this.state === "playing") {
             this.game.draw(this.context, this.canvas)
         }
 
-        this.selfDebug()
+        if (this.state === "score") {
+            this.score.draw(this.context, this.canvas)
+        }
+
+        // this.selfDebug()
     }
 
     appLoop(currentTime) {

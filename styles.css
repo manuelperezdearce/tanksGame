@@ -23,9 +23,3 @@
     align-items: center;
     gap: 12px;
 }
-
-#gameCanvas {
-
-    background-color: #142235;
-    border: 2px solid white;
-}

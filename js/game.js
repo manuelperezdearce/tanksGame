@@ -21,7 +21,7 @@ export class Game {
         // Iniciar Entidades
         this.stage = new Stage(stages[this.currentStageid])
         this.hud = new HUD()
-        this.player = new Player(true, true, 200, 300)
+        this.player = new Player(true, true, 500, 500)
         this.collision = new Collision()
         // allies.push(player)
 
@@ -127,7 +127,14 @@ export class Game {
         }
 
         if (this.status === "gameOver" || this.status === "completed") {
-            this.enterScore.update(keys, this.score, this.status)
+            const playerName = this.enterScore.update(keys, this.score, this.status)
+            if (playerName) {
+                return {
+                    action: "saveScore",
+                    name: playerName,
+                    score: this.score
+                }
+            }
         }
 
 
@@ -160,7 +167,7 @@ export class Game {
         // CAPA 4 - Debug
 
         if (debug) {
-            this.drawSelfDebug(context)
+            this.drawSelfDebug(context, canvas)
         }
 
         if (this.status === "gameOver" || this.status === "completed") {
@@ -170,8 +177,13 @@ export class Game {
 
     }
 
-    drawSelfDebug(context) {
-
+    drawSelfDebug(context, canvas) {
+        context.fillStyle = "#fff"
+        context.fillText(
+            `Game Status: ${this.status}`,
+            10,
+            canvas.height / 2
+        )
     }
 
     checkBulletVsEnemy() {
@@ -217,7 +229,7 @@ export class Game {
 
     loadStage(stageId) {
         this.stage = new Stage(stages[stageId])
-
+        this.player.position = { x: 500, y: 500 }
         this.enemies = []
         this.bullets = []
     }
