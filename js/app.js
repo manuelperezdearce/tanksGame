@@ -1,6 +1,6 @@
-import { Game } from "/js/game.js";
-import { Menu } from "/js/menu.js";
-import { Score } from "/js/score.js";
+import { Game } from "./js/game.js";
+import { Menu } from "./js/menu.js";
+import { Score } from "./js/score.js";
 
 export class App {
     constructor(canvas) {
