@@ -96,11 +96,6 @@ export class HUD {
             90
         );
 
-        context.fillText(
-            `Bullets: ${this.bullets.length}`,
-            canvas.width - 210,
-            120
-        );
 
 
         this.dibujarPuntero(context)
@@ -108,18 +103,36 @@ export class HUD {
 
     dibujarPuntero(context) {
 
+
+        context.save()
+        context.translate(this.mousePosition.x, this.mousePosition.y)
+
         context.beginPath()
-        context.fillStyle = "#e60bc9b6"
+        context.fillStyle = "#ac0c0cb6"
         context.arc(
-            this.mousePosition.x,
-            this.mousePosition.y,
-            20,
+            0,
+            0,
+            4,
             0,
             2 * Math.PI,
             true
 
         )
         context.fill()
+        context.fillStyle = "#d8db0075"
+        for (let i = 0; i < Math.PI * 2; i += Math.PI / 2) {
+
+            context.rotate(i)
+            context.fillRect(
+                -2,
+                10,
+                4,
+                20
+            )
+        }
+
+
+        context.restore()
     }
 
 }

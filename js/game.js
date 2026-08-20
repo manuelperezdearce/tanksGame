@@ -9,10 +9,6 @@ import { Stage } from "/js/stages/stage.js";
 import { Collision } from "/js/collision.js";
 import { EnterScore } from "./enterScore.js";
 
-const debug = {
-    showHitboxes: false
-}
-
 export class Game {
     constructor() {
 
@@ -27,7 +23,7 @@ export class Game {
 
         this.enemiesKilled = 0
         this.enterScore = new EnterScore()
-        this.score = 100
+        this.score = 0
         this.status = "running" /// running, gameOver, completed, enterScore, finished
 
         // Colecciones
@@ -35,6 +31,8 @@ export class Game {
         this.bullets = []
         this.enemies = []
         this.worldBounds = { width: 800, height: 800 }
+
+        this.debug = true
 
     }
 
@@ -166,23 +164,27 @@ export class Game {
 
         // CAPA 4 - Debug
 
-        if (debug) {
+        if (this.debug) {
             this.drawSelfDebug(context, canvas)
         }
 
         if (this.status === "gameOver" || this.status === "completed") {
             this.enterScore.draw(context, canvas)
         }
-
-
     }
 
     drawSelfDebug(context, canvas) {
         context.fillStyle = "#fff"
+        context.font = `15px Arial`
         context.fillText(
             `Game Status: ${this.status}`,
-            10,
-            canvas.height / 2
+            0,
+            canvas.height
+        )
+        context.fillText(
+            `Bullets: ${this.bullets.length}`,
+            0,
+            canvas.height - 15
         )
     }
 

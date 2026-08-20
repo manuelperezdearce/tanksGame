@@ -13,6 +13,11 @@ export class EnterScore {
         this.gameStatus = ""
         this.canMove = true
 
+        this.position = { x: 0, y: 0 }
+        this.dimensions = { w: 300, h: 400 }
+
+        this.debug = false
+
 
         let counter = 0
         this.playerName.forEach((ele) => {
@@ -32,55 +37,83 @@ export class EnterScore {
 
     }
     draw(context, canvas) {
+        this.position.x = canvas.width / 2 - this.dimensions.w / 2
+        this.position.y = canvas.height / 4
 
-        context.fillStyle = "#13090971"
-        context.fillRect(0, 0, canvas.height, canvas.height)
+        context.save()
+        context.translate(this.position.x, this.position.y)
+
+        context.fillStyle = "#1818189c"
+
+        context.fillRect(
+            0,
+            0,
+            this.dimensions.w,
+            this.dimensions.h
+        )
 
         context.fillStyle = "#fff";
-        context.font = `${this.fontSize}px Arial`;
-
-
+        context.font = `bold 40px Arial`;
         if (this.gameStatus === "gameOver") {
-            context.fillStyle = "#6b0a0a";
+            context.fillStyle = "#e40f0f";
             context.fillText(
                 "GAME OVER",
-                canvas.width / 2 - 50,
-                canvas.height / 3
+                this.dimensions.w / 2 - 120,
+                50
             );
         }
         if (this.gameStatus === "completed") {
             context.fillStyle = "#2ea300";
             context.fillText(
                 "VICTORY",
-                canvas.width / 2 - 50,
-                canvas.height / 3
+                this.dimensions.w / 2 - 90,
+                50
             );
         }
 
         context.fillStyle = "#fff";
+        context.font = `bold 20px Arial`;
         context.fillText(
             `YOUR SCORE: ${this.playerScore}`,
-            canvas.width / 2 - 50,
-            canvas.height / 3 + 50
+            this.dimensions.w / 2 - 90,
+            100
         );
 
+        this.drawPlayerName(context)
+
+        /// DRAW CONTROLS HELP
+        const text = `Use "WASD" to Move\nPress "Espace" to Save\nPress "ESC" to back to Main Menu`
+        const lines = text.split("\n")
+        context.fillStyle = "#9b1f0f";
+        context.font = "bold 14px Arial"
+        lines.reverse().forEach((line, index) => {
+            context.fillText(
+                line,
+                10,
+                this.dimensions.h - index * 14 - 10
+            )
+        })
 
 
-        this.drawPlayerName(context, canvas)
 
-        this.selfBebug(context, canvas)
+        if (this.debug) {
+            this.selfDebug(context)
+        }
 
+
+
+        context.restore()
     }
 
     //// ACTIONS
 
-    drawPlayerName(context, canvas) {
+    drawPlayerName(context) {
         context.fillStyle = "#fff";
-        context.font = `30px Arial`;
+        context.font = `20px Arial`;
         context.fillText(
             "ENTER YOUR NAME",
-            canvas.width / 2 - 50,
-            canvas.height / 3 + 100
+            this.dimensions.w / 2 - 90,
+            this.dimensions.h / 2
         );
 
         let charSpace = 0
@@ -96,11 +129,11 @@ export class EnterScore {
 
             context.fillText(
                 `${ele}`,
-                canvas.width / 2 - 50 + charSpace,
-                canvas.height / 3 + 140
+                this.dimensions.w / 2 - 60 + charSpace,
+                this.dimensions.h / 3 + 140
             );
             indexCounter++
-            charSpace += 30
+            charSpace += 35
         })
 
     }
@@ -175,13 +208,13 @@ export class EnterScore {
     }
 
     /// DEBUG
-    selfBebug(context, canvas) {
+    selfDebug(context) {
         context.fillStyle = "#fff";
         context.font = `10px Arial`;
         context.fillText(
             `$Char Index ${this.charArrayIndex}`,
-            canvas.width / 2 - 50,
-            canvas.height - 100
+            0,
+            this.dimensions.h
         )
     }
 
