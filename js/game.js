@@ -35,6 +35,8 @@ export class Game {
 
         this.debug = false
 
+        this.updateHUD({ x: 0, y: 0 })
+
     }
 
     ///// ACTUALIZAR ////////
@@ -42,6 +44,8 @@ export class Game {
     update(deltaTime, keysPressed, keysHeld, mousePosition, mouseClicked) {
 
         if (this.state === "ready") {
+            this.updateHUD(mousePosition)
+
             if (keysPressed[" "]) {
                 this.state = this.stateAfterReady
             }
@@ -161,16 +165,7 @@ export class Game {
 
             this.score = this.enemiesKilled * 10
 
-            this.hud.update(
-                this.player.life,
-                this.enemiesKilled,
-                this.enemiesKilled * 10,
-                mousePosition,
-                this.enemies.length,
-                this.allies.length,
-                this.stage,
-                this.bullets
-            )
+            this.updateHUD(mousePosition)
         }
 
         if (this.state === "stageSummary" && keysPressed[" "]) {
@@ -274,6 +269,20 @@ export class Game {
 
     }
 
+    updateHUD(mousePosition) {
+        const enemiesDefeated =
+            this.stage.spawnedEnemies - this.enemies.length
+
+        this.hud.update(
+            this.player.life,
+            this.score,
+            mousePosition,
+            enemiesDefeated,
+            this.stage.totalEnemies,
+            this.stage
+        )
+    }
+
     /// ACTIONS
 
     spawnEnemies(event) {
@@ -337,6 +346,7 @@ export class Game {
         this.bullets = []
         this.stateAfterReady = "running"
         this.state = "ready"
+        this.updateHUD(this.hud.mousePosition)
     }
 
     prepareToContinue() {

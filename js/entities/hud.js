@@ -1,136 +1,96 @@
 export class HUD {
     constructor() {
-        this.enemiesKilled = ""
-        this.score = ""
-        this.playerLife = ""
-        this.fontSize = 20
+        this.playerLife = 0
+        this.score = 0
+        this.enemiesDefeated = 0
+        this.totalEnemies = 0
         this.mousePosition = { x: 0, y: 0 }
-        this.qEnemies = ""
-        this.qAllies = ""
-        this.bullets = ""
 
         this.stage = {
-            id: "",
+            id: 0,
             name: "",
-            remainingTime: "",
-            state: ""
+            remainingTime: 0
         }
     }
 
 
     /// UPDATE ///
 
-    update(playerLife, enemiesKilled, score, mousePosition, qEnemies, qAllies, stage, bullets) {
-        this.enemiesKilled = enemiesKilled
+    update(
+        playerLife,
+        score,
+        mousePosition,
+        enemiesDefeated,
+        totalEnemies,
+        stage
+    ) {
         this.playerLife = playerLife
         this.score = score
         this.mousePosition = mousePosition
-        this.qAllies = qAllies
-        this.qEnemies = qEnemies
+        this.enemiesDefeated = enemiesDefeated
+        this.totalEnemies = totalEnemies
         this.stage.id = stage.id
-        this.stage.remainingTime = stage.remainingTime.toFixed(1)
-        this.stage.state = stage.state
         this.stage.name = stage.name
-        this.bullets = bullets
+        this.stage.remainingTime = Math.ceil(stage.remainingTime)
     }
 
     /// DRAW ////
 
     draw(canvas, context) {
-        context.fillStyle = "white";
-        context.font = `${this.fontSize}px Arial`;
+        context.save()
 
-        /// Enemies Killed
+        context.fillStyle = "#11131883"
+        context.fillRect(10, 10, canvas.width - 20, 90)
+
+        context.font = "bold 20px Arial"
+        context.textAlign = "left"
+        context.fillStyle = this.playerLife <= 2
+            ? "#ff3b30"
+            : "#ffffff"
+        context.fillText(`LIFE ${this.playerLife}`, 30, 43)
+
+        context.fillStyle = "#ffffff"
+        context.fillText(`SCORE ${this.score}`, 30, 77)
+
+        context.textAlign = "center"
         context.fillText(
-            `Enemies killed: ${this.enemiesKilled}`,
-            20,
-            30
-        );
-        /// SCORE
-        context.fillText(
-            `Score ${this.score}`,
-            20,
-            60
-        );
-        /// Player Life
-        context.fillText(
-            `Life ${this.playerLife}`,
+            `STAGE ${this.stage.id} - ${this.stage.name}`,
             canvas.width / 2,
-            canvas.height - this.fontSize
-        );
-
-        // /// Allies
-        // context.fillText(
-        //     `Allies ${this.qAllies}`,
-        //     canvas.width / 2 - 100,
-        //     canvas.height - this.fontSize
-        // );
-
-        /// Enemies
+            43
+        )
         context.fillText(
-            `Enemies remaining ${this.qEnemies}`,
-            canvas.width - 210,
-            30
-        );
-        /// Stage
-        context.fillText(
-            `Stage ${this.stage.id}`,
+            `TIME ${this.stage.remainingTime}s`,
             canvas.width / 2,
-            30
-        );
+            77
+        )
 
+        context.textAlign = "right"
         context.fillText(
-            `${this.stage.name}`,
-            canvas.width / 2,
-            60
-        );
+            `ENEMIES ${this.enemiesDefeated} / ${this.totalEnemies}`,
+            canvas.width - 30,
+            43
+        )
 
-        context.fillText(
-            `Remaining Time: ${this.stage.remainingTime}`,
-            canvas.width - 210,
-            60
-        );
-        context.fillText(
-            `Stage State: ${this.stage.state}`,
-            canvas.width - 210,
-            90
-        );
+        context.restore()
 
-
-
-        this.dibujarPuntero(context)
+        this.drawPointer(context)
     }
 
-    dibujarPuntero(context) {
-
-
+    drawPointer(context) {
         context.save()
         context.translate(this.mousePosition.x, this.mousePosition.y)
 
         context.beginPath()
         context.fillStyle = "#ac0c0cb6"
-        context.arc(
-            0,
-            0,
-            4,
-            0,
-            2 * Math.PI,
-            true
-
-        )
+        context.arc(0, 0, 4, 0, 2 * Math.PI)
         context.fill()
+
         context.fillStyle = "#d8db0075"
-        for (let i = 0; i < Math.PI * 2; i += Math.PI / 2) {
 
-            context.rotate(i)
-            context.fillRect(
-                -2,
-                10,
-                4,
-                20
-            )
+        for (let index = 0; index < 4; index++) {
+            context.rotate(Math.PI / 2)
+            context.fillRect(-2, 10, 4, 20)
         }
-
 
         context.restore()
     }
