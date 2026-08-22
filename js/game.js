@@ -33,7 +33,7 @@ export class Game {
         this.enemies = []
         this.worldBounds = { width: 800, height: 800 }
 
-        this.debug = true
+        this.debug = false
 
     }
 

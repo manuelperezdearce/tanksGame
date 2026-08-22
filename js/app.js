@@ -23,7 +23,7 @@ export class App {
         this.previousTime = null
         this.deltaTime = null
 
-        this.debug = true
+        this.debug = false
 
         /// INPUT LAUNCH
         this.detectarTeclado()
