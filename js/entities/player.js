@@ -10,6 +10,7 @@ export class Player {
         this.position = { x: positionX, y: positionY }
         this.tank = new Tank(this.position)
         this.canon = new Canon(this.tank.mount)
+        this.tank.hp = this.isAlly ? 5 : 2
         this.life = this.tank.hp
         this.pointer = { x: 0, y: 0 }
         this.dimensions = { w: this.tank.width, h: this.tank.height }
@@ -17,32 +18,24 @@ export class Player {
         this.rotationSpeed = this.tank.rotationSpeed
         this.angle = - Math.PI / 2
         this.isAlive = true
-        this.fireCooldown = 1.2
-        this.timeUntilNextShot = 0
+        this.fireCooldown = 2.5
+        this.timeUntilNextShot = this.isHuman
+            ? 0
+            : 1 + Math.random() * this.fireCooldown
     }
 
     ////// GAME ///////
-    update(deltaTime, keys, mousePosition, target) {
+    update(deltaTime, keysPressed, keysHeld, mousePosition, target) {
 
         if (this.isHuman) {
 
-            this.move(deltaTime, keys)
+            this.move(deltaTime, keysHeld)
             this.aim(mousePosition)
 
         } else {
 
             this.moveCPU(deltaTime, target)
             this.aimCPU(target)
-        }
-        if (!this.isHuman) {
-            this.moveCPU(deltaTime, target)
-            this.aimCPU(target)
-
-            const shotData = this.shootCPU(deltaTime)
-
-            if (shotData) {
-                return shotData
-            }
         }
 
         this.tank.update(
@@ -54,6 +47,10 @@ export class Player {
             this.pointer,
             this.tank.canonMount
         )
+
+        if (!this.isHuman) {
+            return this.shootCPU(deltaTime)
+        }
     }
 
     draw(context, canvas) {
@@ -126,24 +123,24 @@ export class Player {
     //////////////   ACCIONES  /////////////////////
     ///////////////////////////////////////////////////
 
-    move(deltaTime, keys) {
+    move(deltaTime, keysHeld) {
 
         let movement = 0;
         let steering = 0;
 
-        if (keys.w) {
+        if (keysHeld.w) {
             movement = 1;
         }
 
-        if (keys.s) {
+        if (keysHeld.s) {
             movement = -1;
         }
 
-        if (keys.a) {
+        if (keysHeld.a) {
             steering = -1;
         }
 
-        if (keys.d) {
+        if (keysHeld.d) {
             steering = 1;
         }
 
@@ -182,7 +179,10 @@ export class Player {
     }
 
     shoot() {
-        return this.canon.getShotData()
+        const shotData = this.canon.getShotData()
+        shotData.team = this.isAlly ? "ally" : "enemy"
+
+        return shotData
     }
 
     shootCPU(deltaTime) {

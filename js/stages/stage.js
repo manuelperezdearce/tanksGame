@@ -2,14 +2,22 @@ export class Stage {
     constructor(stage) {
         this.id = stage.id
         this.name = stage.name
-        this.totalEnemies = stage.totalEnemies
         this.spawnedEnemies = 0
+        this.events = stage.events.map(event => ({
+            ...event,
+            triggered: false
+        }))
+        this.totalEnemies = this.events.reduce(
+            (total, event) => total + event.amount,
+            0
+        )
         this.timeLimit = stage.timeLimit
         this.elapsedTime = 0
         this.backgroundImage = new Image()
         this.backgroundImage.src = stage.bgImageSRC
         this.remainingTime = this.timeLimit
-        this.status = "running"  //// ready, running, finished, completed, failed
+        this.state = "running"
+        this.result = null  //// completed, failed
 
         this.debugCounter = 0
 
@@ -18,16 +26,11 @@ export class Stage {
     /// Actualizar
     update(deltaTime, playerLife, enemiesLength) {
 
-        /// Runing
-
-        if (this.status === "running") {
-            this.running(deltaTime, playerLife, enemiesLength)
+        if (this.state === "running") {
+            return this.running(deltaTime, playerLife, enemiesLength)
         }
 
-        if (this.status === "finished") {
-            this.checkIfWinOrLose(playerLife, enemiesLength)
-        }
-
+        return []
     }
     /// Dibujar
     draw(context, canvas) {
@@ -47,30 +50,41 @@ export class Stage {
         this.elapsedTime += deltaTime
         this.remainingTime = this.timeLimit - this.elapsedTime
 
+        const pendingEvents = this.events.filter(
+            event => !event.triggered && this.elapsedTime >= event.time
+        )
+
+        pendingEvents.forEach(event => {
+            event.triggered = true
+        })
+
         if (playerLife <= 0) {
-            this.status = "finished"
+            this.finish("failed")
+            return pendingEvents
         }
         if (this.remainingTime <= 0) {
             this.remainingTime = 0
-            this.status = "finished"
+            this.finish(
+                this.spawnedEnemies >= this.totalEnemies && enemiesLength === 0
+                    ? "completed"
+                    : "failed"
+            )
+            return pendingEvents
         }
         if (
             this.spawnedEnemies >= this.totalEnemies &&
             enemiesLength === 0
         ) {
-            this.status = "finished"
+            this.finish("completed")
         }
+
+        return pendingEvents
 
     }
-    /// Utilidades
-    checkIfWinOrLose(playerLife, enemiesLength) {
 
-        if (playerLife <= 0 || enemiesLength > 0) {
-            this.status = "failed"
-
-        } else if (playerLife >= 1 && enemiesLength === 0) {
-            this.status = "completed"
-        }
+    finish(result) {
+        this.result = result
+        this.state = "finished"
     }
 
 

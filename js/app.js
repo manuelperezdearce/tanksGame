@@ -8,17 +8,22 @@ export class App {
         this.canvas = canvas
         this.context = canvas.getContext("2d")
 
-        this.keys = {}
+        /// USER INPUTS
+        this.keysHeld = {}
+        this.keysPressed = {}
         this.mousePosition = { x: 0, y: 0 }
-        this.mouseClicked = false
+        this.mousePressed = false
 
-        this.state = "menu" /// menu score playing pause
+        this.previousState = null
+        this.state = "menu" /// menu score game pause
         this.menu = new Menu()
         this.score = new Score()
         this.game = null
 
         this.previousTime = null
         this.deltaTime = null
+
+        this.debug = true
 
         /// INPUT LAUNCH
         this.detectarTeclado()
@@ -28,81 +33,106 @@ export class App {
 
     update(deltaTime) {
 
-
         if (this.state === "menu") {
 
-            const selectedOption =
-                this.menu.update(this.keys, this.canvas)
+            let selectedOption =
+                this.menu.update(this.keysPressed, this.canvas)
 
             if (selectedOption) {
 
                 if (selectedOption.appState === "new game") {
                     this.game = new Game()
-                    this.state = "playing"
+                    this.setContinueAvailable(false)
+                    this.setState("game")
                 }
                 if (selectedOption.appState === "score") {
-                    this.state = "score"
+                    this.score.setState("ranking")
+                    this.setState("score")
                 }
 
                 if (selectedOption.appState === "continue game" && this.game !== null) {
-                    this.state = "playing"
+                    this.game.prepareToContinue()
+                    this.setState("game")
                 }
             }
+
         }
 
-        if (this.state === "playing" && this.game !== null) {
+        else if (this.state === "game") {
 
-            const gameAction = this.game.update(
-                deltaTime,
-                this.keys,
-                this.mousePosition,
-                this.mouseClicked
-            )
-
-            if (gameAction?.action === "saveScore") {
-
-                this.score.addScore(
-                    gameAction.name,
-                    gameAction.score
+            if (this.game !== null) {
+                this.game.update(
+                    deltaTime,
+                    this.keysPressed,
+                    this.keysHeld,
+                    this.mousePosition,
+                    this.mousePressed
                 )
-
-                this.game = null
-                this.state = "score"
+                if (this.game.state === "finished") {
+                    this.score.prepareNewScore(
+                        this.game.score,
+                        this.game.result
+                    )
+                    this.setState("score")
+                    this.keysPressed = {}
+                    this.mousePressed = false
+                    return
+                }
             }
+
         }
 
-        if (this.state === "score") {
+        else if (this.state === "score") {
 
             this.score.update(
-                deltaTime,
-                this.keys,
+                this.keysPressed,
+                this.keysHeld,
                 this.mousePosition,
-                this.mouseClicked
+                this.mousePressed
             )
         }
 
-        if (this.keys.Escape && this.state !== "menu") {
-            this.state = "menu"
+        if (this.keysPressed.Escape) {
+
+            if (this.state === "score") {
+                if (this.game?.state === "finished") {
+                    this.destroyGame()
+                }
+                this.setState("menu")
+            }
+            else if (this.state === "game") {
+                this.setContinueAvailable(true)
+                this.setState("menu")
+                this.score.state = "ranking"
+            }
+
+
+
+
+
         }
 
-        this.mouseClicked = false
+        this.keysPressed = {}
+        this.mousePressed = false
     }
 
     draw() {
 
+
+        if (this.game !== null) {
+            this.game.draw(this.context, this.canvas)
+        }
+        if (this.state === "score") {
+            this.score.draw(this.context, this.canvas)
+        }
         if (this.state === "menu") {
             this.menu.draw(this.context, this.canvas)
         }
 
-        if (this.state === "playing") {
-            this.game.draw(this.context, this.canvas)
+        if (this.debug) {
+            this.selfDebug()
         }
 
-        if (this.state === "score") {
-            this.score.draw(this.context, this.canvas)
-        }
-
-        // this.selfDebug()
     }
 
     appLoop(currentTime) {
@@ -161,12 +191,16 @@ export class App {
 
     detectarTeclado() {
         window.addEventListener("keydown", (event) => {
-            this.keys[event.key] = true
+            if (!this.keysHeld[event.key]) {
+                this.keysPressed[event.key] = true
+            }
+
+            this.keysHeld[event.key] = true
         })
 
 
         window.addEventListener("keyup", (event) => {
-            this.keys[event.key] = false
+            this.keysHeld[event.key] = false
         })
 
     }
@@ -178,7 +212,7 @@ export class App {
     detectarClick() {
         this.canvas.addEventListener("click", (event) => {
             this.mousePosition = this.getMousePosition(event)
-            this.mouseClicked = true
+            this.mousePressed = true
         })
     }
 
@@ -194,6 +228,50 @@ export class App {
             x: event.clientX - rect.left - borderLeft,
             y: event.clientY - rect.top - borderTop
         }
+    }
+
+    /// STATES
+
+    setState(newState) {
+        if (this.state === newState) {
+            return
+        }
+        else {
+            this.previousState = this.state
+            this.state = newState
+            this.onEnterState(newState)
+        }
+
+
+    }
+
+    onEnterState(state) {
+
+        if (state === "score") {
+            if (this.game === null) {
+                this.score.state = "ranking"
+            }
+
+        }
+    }
+
+    setContinueAvailable(isAvailable) {
+        const continueOption = this.menu.options.find(
+            option => option.appState === "continue game"
+        )
+
+        if (continueOption) {
+            continueOption.isAvailable = isAvailable
+        }
+    }
+
+    destroyGame() {
+        if (this.game !== null) {
+            this.game.destroyEntities()
+            this.game = null
+        }
+
+        this.setContinueAvailable(false)
     }
 
 }
