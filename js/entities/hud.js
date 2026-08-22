@@ -6,6 +6,9 @@ export class HUD {
         this.totalEnemies = 0
         this.mousePosition = { x: 0, y: 0 }
 
+        this.heartImage = new Image()
+        this.heartImage.src = "./assets/common/heart-64.png"
+
         this.stage = {
             id: 0,
             name: "",
@@ -47,7 +50,23 @@ export class HUD {
         context.fillStyle = this.playerLife <= 2
             ? "#ff3b30"
             : "#ffffff"
-        context.fillText(`LIFE ${this.playerLife}`, 30, 43)
+
+        if (
+            this.heartImage.complete &&
+            this.heartImage.naturalWidth > 0
+        ) {
+            context.drawImage(
+                this.heartImage,
+                25,
+                20,
+                36,
+                36
+            )
+            context.fillText(`x ${this.playerLife}`, 70, 43)
+        }
+        else {
+            context.fillText(`LIFE ${this.playerLife}`, 30, 43)
+        }
 
         context.fillStyle = "#ffffff"
         context.fillText(`SCORE ${this.score}`, 30, 77)
