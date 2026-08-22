@@ -8,7 +8,7 @@ import { Stage } from "./stages/stage.js";
 import { Collision } from "./collision.js";
 
 export class Game {
-    constructor() {
+    constructor(effectsEnabled = true, effectsVolume = 0.3) {
 
 
         this.currentStageid = 1
@@ -32,6 +32,24 @@ export class Game {
         this.bullets = []
         this.enemies = []
         this.worldBounds = { width: 800, height: 800 }
+
+        this.effectsEnabled = effectsEnabled
+        this.effectsVolume = effectsVolume
+
+        this.shotSounds = Array.from(
+            { length: 6 },
+            () => {
+                const sound =
+                    new Audio("./assets/audio/shot.wav")
+
+                sound.volume = this.effectsVolume
+                sound.preload = "auto"
+
+                return sound
+            }
+        )
+
+        this.nextShotSoundIndex = 0
 
         this.debug = false
 
@@ -82,6 +100,7 @@ export class Game {
                 )
 
                 this.bullets.push(bullet)
+                this.playShotSound()
             }
 
             this.enemies.forEach(enemy => {
@@ -95,6 +114,7 @@ export class Game {
 
                 if (shotData) {
                     this.bullets.push(new Bullet(shotData))
+                    this.playShotSound()
                 }
             });
 
@@ -284,6 +304,39 @@ export class Game {
     }
 
     /// ACTIONS
+
+    playShotSound() {
+        if (!this.effectsEnabled) {
+            return
+        }
+
+        const sound =
+            this.shotSounds[this.nextShotSoundIndex]
+
+        sound.currentTime = 0
+
+        sound.play().catch(() => {
+            // El juego continúa si el navegador bloquea el audio.
+        })
+
+        this.nextShotSoundIndex++
+
+        if (
+            this.nextShotSoundIndex >=
+            this.shotSounds.length
+        ) {
+            this.nextShotSoundIndex = 0
+        }
+    }
+
+    setEffectsSettings(enabled, volume) {
+        this.effectsEnabled = enabled
+        this.effectsVolume = volume
+
+        this.shotSounds.forEach(sound => {
+            sound.volume = volume
+        })
+    }
 
     spawnEnemies(event) {
         for (let index = 0; index < event.amount; index++) {

@@ -20,6 +20,27 @@ export class App {
         this.score = new Score()
         this.game = null
 
+        this.storageKey = "tanksStorage"
+        this.settings = this.loadSettings()
+        this.musicEnabled = this.settings.music.enabled
+        this.musicVolume = this.settings.music.volume
+        this.effectsEnabled = this.settings.effects.enabled
+        this.effectsVolume = this.settings.effects.volume
+        this.menu.setAudioSettings(this.settings)
+        this.saveSettings()
+
+        this.gameMusic =
+            new Audio("./assets/audio/gameSoundBg.wav")
+        this.gameMusic.loop = true
+        this.gameMusic.volume = this.musicVolume
+        this.gameMusic.preload = "auto"
+
+        this.mainMusic =
+            new Audio("./assets/audio/mainSoundBg.wav")
+        this.mainMusic.loop = true
+        this.mainMusic.volume = this.musicVolume
+        this.mainMusic.preload = "auto"
+
         this.previousTime = null
         this.deltaTime = null
 
@@ -40,8 +61,16 @@ export class App {
 
             if (selectedOption) {
 
+                if (selectedOption.action) {
+                    this.handleSettingsAction(selectedOption)
+                }
+
                 if (selectedOption.appState === "new game") {
-                    this.game = new Game()
+                    this.game = new Game(
+                        this.effectsEnabled,
+                        this.effectsVolume
+                    )
+                    this.gameMusic.currentTime = 0
                     this.setContinueAvailable(false)
                     this.setState("game")
                 }
@@ -196,6 +225,7 @@ export class App {
             }
 
             this.keysHeld[event.key] = true
+            this.updateMusic()
         })
 
 
@@ -213,6 +243,7 @@ export class App {
         this.canvas.addEventListener("click", (event) => {
             this.mousePosition = this.getMousePosition(event)
             this.mousePressed = true
+            this.updateMusic()
         })
     }
 
@@ -240,6 +271,7 @@ export class App {
             this.previousState = this.state
             this.state = newState
             this.onEnterState(newState)
+            this.updateMusic()
         }
 
 
@@ -252,6 +284,171 @@ export class App {
                 this.score.state = "ranking"
             }
 
+        }
+    }
+
+    updateMusic() {
+        const shouldPlayGameMusic =
+            this.musicEnabled &&
+            this.state === "game"
+
+        const shouldPlayMainMusic =
+            this.musicEnabled &&
+            (
+                this.state === "menu" ||
+                this.state === "score"
+            )
+
+        if (shouldPlayGameMusic && this.gameMusic.paused) {
+            this.gameMusic.play().catch(() => {
+                // El navegador puede esperar otra interacción del usuario.
+            })
+        }
+
+        if (!shouldPlayGameMusic && !this.gameMusic.paused) {
+            this.gameMusic.pause()
+        }
+
+        if (shouldPlayMainMusic && this.mainMusic.paused) {
+            this.mainMusic.play().catch(() => {
+                // El navegador puede esperar otra interacción del usuario.
+            })
+        }
+
+        if (!shouldPlayMainMusic && !this.mainMusic.paused) {
+            this.mainMusic.pause()
+        }
+    }
+
+    handleSettingsAction(selection) {
+        if (selection.action === "toggleMusic") {
+            this.musicEnabled = !this.musicEnabled
+            this.settings.music.enabled = this.musicEnabled
+        }
+
+        if (selection.action === "toggleEffects") {
+            this.effectsEnabled = !this.effectsEnabled
+            this.settings.effects.enabled = this.effectsEnabled
+        }
+
+        if (selection.action === "changeMusicVolume") {
+            this.musicVolume = this.changeVolume(
+                this.musicVolume,
+                selection.direction
+            )
+            this.settings.music.volume = this.musicVolume
+        }
+
+        if (selection.action === "changeEffectsVolume") {
+            this.effectsVolume = this.changeVolume(
+                this.effectsVolume,
+                selection.direction
+            )
+            this.settings.effects.volume = this.effectsVolume
+        }
+
+        this.mainMusic.volume = this.musicVolume
+        this.gameMusic.volume = this.musicVolume
+
+        if (this.game !== null) {
+            this.game.setEffectsSettings(
+                this.effectsEnabled,
+                this.effectsVolume
+            )
+        }
+
+        this.menu.setAudioSettings(this.settings)
+        this.saveSettings()
+        this.updateMusic()
+    }
+
+    changeVolume(currentVolume, direction) {
+        const newVolume =
+            currentVolume + direction * 0.1
+
+        return Math.round(
+            Math.min(1, Math.max(0, newVolume)) * 10
+        ) / 10
+    }
+
+    loadSettings() {
+        const defaultSettings = {
+            music: { enabled: true, volume: 0.3 },
+            effects: { enabled: true, volume: 0.3 }
+        }
+
+        try {
+            const data = localStorage.getItem(this.storageKey)
+
+            if (!data) {
+                return defaultSettings
+            }
+
+            const storage = JSON.parse(data)
+            const savedSettings = storage.settings
+
+            if (!savedSettings) {
+                return defaultSettings
+            }
+
+            const musicVolume =
+                Number.isFinite(savedSettings.music?.volume)
+                    ? savedSettings.music.volume
+                    : 0.3
+            const effectsVolume =
+                Number.isFinite(savedSettings.effects?.volume)
+                    ? savedSettings.effects.volume
+                    : 0.3
+
+            return {
+                music: {
+                    enabled:
+                        typeof savedSettings.music?.enabled === "boolean"
+                            ? savedSettings.music.enabled
+                            : true,
+                    volume:
+                        Math.min(1, Math.max(0, musicVolume))
+                },
+                effects: {
+                    enabled:
+                        typeof savedSettings.effects?.enabled === "boolean"
+                            ? savedSettings.effects.enabled
+                            : true,
+                    volume:
+                        Math.min(1, Math.max(0, effectsVolume))
+                }
+            }
+        }
+        catch (error) {
+            console.log("Error loading settings", error)
+            return defaultSettings
+        }
+    }
+
+    saveSettings() {
+        try {
+            const data = localStorage.getItem(this.storageKey)
+            const parsedStorage = data ? JSON.parse(data) : {}
+            const storage =
+                parsedStorage &&
+                    typeof parsedStorage === "object" &&
+                    !Array.isArray(parsedStorage)
+                    ? parsedStorage
+                    : {}
+
+            storage.version = 1
+            storage.settings = this.settings
+            storage.scores = Array.isArray(storage.scores)
+                ? storage.scores
+                : []
+
+            localStorage.setItem(
+                this.storageKey,
+                JSON.stringify(storage)
+            )
+        }
+        catch (error) {
+            console.log("Error saving settings", error)
         }
     }
 

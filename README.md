@@ -1,4 +1,4 @@
-# Tanks 1.0
+# Tanks 1.1
 
 Tanks es un juego 2D desarrollado con JavaScript vanilla y Canvas. El jugador controla un tanque, supera oleadas de enemigos manejados por una IA sencilla y registra su puntuación al finalizar la partida.
 
@@ -19,6 +19,9 @@ El proyecto fue construido como un MVP de portafolio, priorizando funcionalidad,
 - Resumen de victoria o derrota al finalizar cada etapa.
 - Registro de nombre de cuatro caracteres.
 - Ranking ordenado y persistente mediante `localStorage`.
+- Música diferenciada para menú y partida.
+- Efectos de sonido para los disparos.
+- Settings con controles independientes de música y efectos.
 
 ## Controles
 
@@ -49,6 +52,15 @@ El proyecto fue construido como un MVP de portafolio, priorizando funcionalidad,
 | Cambiar carácter | `W` / `S` |
 | Guardar | `Espacio` o `Enter` |
 | Volver al menú | `Escape` |
+
+### Settings
+
+| Acción | Control |
+| --- | --- |
+| Mover selección | `W` / `S` o flechas arriba/abajo |
+| Activar o desactivar | `Espacio` |
+| Cambiar volumen | `A` / `D` o flechas izquierda/derecha |
+| Volver | `Escape` o seleccionar Back |
 
 ## Objetivo
 
@@ -96,7 +108,7 @@ Menú
 El juego utiliza una estructura basada en clases con responsabilidades concretas:
 
 - `App`: administra el Canvas, el input, el game loop y las pantallas principales.
-- `Menu`: controla las opciones y la navegación del menú.
+- `Menu`: controla las opciones, Settings y la navegación del menú.
 - `Game`: coordina jugador, enemigos, balas, colisiones, HUD y progresión.
 - `Stage`: controla el tiempo, las oleadas y el resultado de cada etapa.
 - `Player`: representa tanto al usuario como a los jugadores controlados por IA.
@@ -155,6 +167,16 @@ Stage result: completed | failed
 - Canvas 2D API
 - Web Storage API (`localStorage`)
 
+## Datos locales
+
+Las preferencias y puntuaciones se guardan bajo una única clave:
+
+```text
+tanksStorage
+```
+
+El almacenamiento contiene los settings de música y efectos junto con el ranking local.
+
 ## Posibles mejoras
 
 Estas ideas quedan fuera del alcance de la versión 1.0:
@@ -162,7 +184,7 @@ Estas ideas quedan fuera del alcance de la versión 1.0:
 - Incorporar más vehículos y armas.
 - Añadir obstáculos y colisiones entre entidades.
 - Crear nuevos tipos de enemigos y comportamientos de IA.
-- Agregar efectos visuales, sonido y música.
+- Agregar efectos visuales de impactos y explosiones.
 - Mejorar el balance y la progresión de dificultad.
 - Adaptar el Canvas a diferentes tamaños de pantalla.
 - Añadir pruebas automatizadas para la lógica del juego.

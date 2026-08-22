@@ -4,7 +4,7 @@ export class Score {
 
     constructor() {
 
-        this.storageKey = "tanksScores"
+        this.storageKey = "tanksStorage"
 
         this.scores = []
 
@@ -163,8 +163,12 @@ export class Score {
                 )
             if (data) {
 
+                const storage = JSON.parse(data)
+
                 this.scores =
-                    JSON.parse(data)
+                    Array.isArray(storage.scores)
+                        ? storage.scores
+                        : []
 
             } else {
 
@@ -185,10 +189,33 @@ export class Score {
 
         try {
 
+            const data =
+                localStorage.getItem(
+                    this.storageKey
+                )
+
+            const parsedStorage = data
+                ? JSON.parse(data)
+                : {}
+
+            const storage =
+                parsedStorage &&
+                    typeof parsedStorage === "object" &&
+                    !Array.isArray(parsedStorage)
+                    ? parsedStorage
+                    : {}
+
+            storage.version = 1
+            storage.settings = storage.settings ?? {
+                music: { enabled: true, volume: 0.3 },
+                effects: { enabled: true, volume: 0.3 }
+            }
+            storage.scores = this.scores
+
             localStorage.setItem(
                 this.storageKey,
                 JSON.stringify(
-                    this.scores
+                    storage
                 )
             )
 
