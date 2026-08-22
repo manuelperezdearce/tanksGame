@@ -5,7 +5,8 @@ export class Bullet {
 
 
         this.speed = 500 + shotData.speedPlus
-        this.color = "#ebfc00"
+        this.team = shotData.team
+        this.color = this.team === "ally" ? "#ebfc00" : "#ff0d00"
         this.direction = {
             x: shotData.direction.x,
             y: shotData.direction.y

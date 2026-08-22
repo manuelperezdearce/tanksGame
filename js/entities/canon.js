@@ -8,7 +8,7 @@ export class Canon {
         this.color = "#054d1d"
         this.angle = 0
         this.canonImage = new Image()
-        this.canonImage.src = "/assets/canons/canon_basic1.png"
+        this.canonImage.src = "./assets/canons/canon_basic1.png"
         this.direction = {
             x: 0,
             y: 0

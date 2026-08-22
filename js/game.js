@@ -1,17 +1,11 @@
 /** @type {HTMLCanvasElement} */
 
-import { stages } from "/js/stages/stagesDATA.js";
-import { Player } from "/js/entities/player.js";
-import { Enemy } from "/js/entities/enemy.js";
-import { HUD } from "/js/entities/hud.js";
-import { Bullet } from "/js/entities/bullet.js";
-import { Stage } from "/js/stages/stage.js";
-import { Collision } from "/js/collision.js";
-import { EnterScore } from "./enterScore.js";
-
-const debug = {
-    showHitboxes: false
-}
+import { stages } from "./stages/stagesDATA.js";
+import { Player } from "./entities/player.js";
+import { HUD } from "./entities/hud.js";
+import { Bullet } from "./entities/bullet.js";
+import { Stage } from "./stages/stage.js";
+import { Collision } from "./collision.js";
 
 export class Game {
     constructor() {
@@ -26,9 +20,12 @@ export class Game {
         // allies.push(player)
 
         this.enemiesKilled = 0
-        this.enterScore = new EnterScore()
-        this.score = 100
-        this.status = "running" /// running, gameOver, completed, enterScore, finished
+        this.score = 0
+
+        /// ready, running, stageSummary, finished
+        this.state = "ready"
+        this.result = null  //// completed, gameOver
+        this.stateAfterReady = "running"
 
         // Colecciones
         this.allies = []
@@ -36,22 +33,41 @@ export class Game {
         this.enemies = []
         this.worldBounds = { width: 800, height: 800 }
 
+        this.debug = true
+
     }
 
     ///// ACTUALIZAR ////////
 
-    update(deltaTime, keys, mousePosition, mouseClicked) {
+    update(deltaTime, keysPressed, keysHeld, mousePosition, mouseClicked) {
 
-        if (this.status === "running") {
-            this.checkStageStatus()
+        if (this.state === "ready") {
+            if (keysPressed[" "]) {
+                this.state = this.stateAfterReady
+            }
 
-            this.stage.update(
+            return
+        }
+
+        if (this.state === "running") {
+            const stageEvents = this.stage.update(
                 deltaTime,
                 this.player.life,
                 this.enemies.length)
 
+            stageEvents.forEach(event => {
+                if (event.type === "spawnEnemy") {
+                    this.spawnEnemies(event)
+                }
+            })
 
-            this.player.update(deltaTime, keys, mousePosition);
+            if (this.stage.state === "finished") {
+                this.state = "stageSummary"
+                return
+            }
+
+
+            this.player.update(deltaTime, keysPressed, keysHeld, mousePosition);
 
             if (mouseClicked) {
 
@@ -64,8 +80,18 @@ export class Game {
                 this.bullets.push(bullet)
             }
 
-            this.enemies.forEach((enemy) => {
-                enemy.update(deltaTime, "", "", this.player);
+            this.enemies.forEach(enemy => {
+                const shotData = enemy.update(
+                    deltaTime,
+                    keysPressed,
+                    keysHeld,
+                    mousePosition,
+                    this.player
+                )
+
+                if (shotData) {
+                    this.bullets.push(new Bullet(shotData))
+                }
             });
 
             this.bullets.forEach((bullet) => {
@@ -89,6 +115,25 @@ export class Game {
                 )
             }
 
+            this.enemies.forEach(enemy => {
+                const enemyBounds = this.collision.checkWorldBounds(
+                    enemy,
+                    this.worldBounds
+                )
+
+                if (
+                    enemyBounds.left ||
+                    enemyBounds.right ||
+                    enemyBounds.top ||
+                    enemyBounds.bottom
+                ) {
+                    enemy.correctWorldCollision(
+                        enemyBounds,
+                        this.worldBounds
+                    )
+                }
+            })
+
             /// bullets
             this.bullets.forEach((bullet) => {
                 const bounds = this.collision.checkWorldBounds(
@@ -110,8 +155,11 @@ export class Game {
 
 
             this.checkBulletVsEnemy();
+            this.checkBulletVsPlayer();
 
             this.cleanupEntities();
+
+            this.score = this.enemiesKilled * 10
 
             this.hud.update(
                 this.player.life,
@@ -123,22 +171,11 @@ export class Game {
                 this.stage,
                 this.bullets
             )
-
         }
 
-        if (this.status === "gameOver" || this.status === "completed") {
-            const playerName = this.enterScore.update(keys, this.score, this.status)
-            if (playerName) {
-                return {
-                    action: "saveScore",
-                    name: playerName,
-                    score: this.score
-                }
-            }
+        if (this.state === "stageSummary" && keysPressed[" "]) {
+            this.continueAfterStage()
         }
-
-
-
     }
 
     /// DIBUJAR
@@ -166,23 +203,31 @@ export class Game {
 
         // CAPA 4 - Debug
 
-        if (debug) {
+        if (this.debug) {
             this.drawSelfDebug(context, canvas)
         }
 
-        if (this.status === "gameOver" || this.status === "completed") {
-            this.enterScore.draw(context, canvas)
+        if (this.state === "ready") {
+            this.drawReady(context, canvas)
         }
 
-
+        if (this.state === "stageSummary") {
+            this.drawStageSummary(context, canvas)
+        }
     }
 
     drawSelfDebug(context, canvas) {
         context.fillStyle = "#fff"
+        context.font = `15px Arial`
         context.fillText(
-            `Game Status: ${this.status}`,
-            10,
-            canvas.height / 2
+            `Game Status: ${this.state}`,
+            0,
+            canvas.height
+        )
+        context.fillText(
+            `Bullets: ${this.bullets.length}`,
+            0,
+            canvas.height - 15
         )
     }
 
@@ -193,9 +238,10 @@ export class Game {
             this.enemies.forEach((enemy) => {
 
                 if (
+                    bullet.team === "ally" &&
                     bullet.isAlive &&
                     enemy.isAlive &&
-                    hayColision(bullet, enemy)
+                    this.collision.checkAABB(bullet, enemy)
                 ) {
                     enemy.takeDamage(bullet.damage);
                     bullet.isAlive = false;
@@ -208,6 +254,20 @@ export class Game {
         });
     }
 
+    checkBulletVsPlayer() {
+        this.bullets.forEach(bullet => {
+            if (
+                bullet.team === "enemy" &&
+                bullet.isAlive &&
+                this.player.isAlive &&
+                this.collision.checkAABB(bullet, this.player)
+            ) {
+                this.player.takeDamage(bullet.damage)
+                bullet.destroy()
+            }
+        })
+    }
+
     cleanupEntities() {
         this.bullets = this.bullets.filter((bullet) => bullet.isAlive);
         this.enemies = this.enemies.filter((enemy) => enemy.isAlive);
@@ -216,6 +276,49 @@ export class Game {
 
     /// ACTIONS
 
+    spawnEnemies(event) {
+        for (let index = 0; index < event.amount; index++) {
+            const position = this.getSpawnPosition(
+                event.side,
+                index,
+                event.amount
+            )
+
+            this.enemies.push(
+                new Player(false, false, position.x, position.y)
+            )
+
+            this.stage.spawnedEnemies++
+        }
+    }
+
+    getSpawnPosition(side, index, amount) {
+        const margin = 40
+        const horizontalSpace = this.worldBounds.width - margin * 2
+        const verticalSpace = this.worldBounds.height - margin * 2
+        const ratio = (index + 1) / (amount + 1)
+
+        if (side === "top") {
+            return { x: margin + horizontalSpace * ratio, y: margin }
+        }
+
+        if (side === "bottom") {
+            return {
+                x: margin + horizontalSpace * ratio,
+                y: this.worldBounds.height - margin
+            }
+        }
+
+        if (side === "left") {
+            return { x: margin, y: margin + verticalSpace * ratio }
+        }
+
+        return {
+            x: this.worldBounds.width - margin,
+            y: margin + verticalSpace * ratio
+        }
+    }
+
     nextStage() {
         const nextStageId = this.currentStageid + 1
         if (stages[nextStageId]) {
@@ -223,7 +326,7 @@ export class Game {
             this.loadStage(this.currentStageid)
         }
         else {
-            this.status = "completed"
+            this.finish("completed")
         }
     }
 
@@ -232,22 +335,101 @@ export class Game {
         this.player.position = { x: 500, y: 500 }
         this.enemies = []
         this.bullets = []
+        this.stateAfterReady = "running"
+        this.state = "ready"
     }
 
-    gameOver() {
-        this.status = "gameOver"
+    prepareToContinue() {
+        if (this.state === "running") {
+            this.stateAfterReady = "running"
+            this.state = "ready"
+        }
     }
 
-    /// UTILIDADES
-
-    checkStageStatus() {
-
-        if (this.stage.status === "completed") {
+    continueAfterStage() {
+        if (this.stage.result === "completed") {
             this.nextStage()
         }
-        if (this.stage.status === "failed") {
-            this.gameOver()
+        else {
+            this.finish("gameOver")
         }
+    }
+
+    finish(result) {
+        this.result = result
+        this.state = "finished"
+    }
+
+    destroyEntities() {
+        this.allies = []
+        this.bullets = []
+        this.enemies = []
+    }
+
+    /// DRAWS
+
+    drawReady(context, canvas) {
+
+        const centerOf = {
+            x: canvas.width / 2,
+            y: canvas.height / 2
+        }
+        const divDimensions = {
+            w: 300,
+            h: 400
+        }
+
+        context.save()
+        context.translate(
+            centerOf.x - divDimensions.w / 2,
+            centerOf.y - divDimensions.h / 2
+        )
+        context.fillStyle = "#181818cb"
+        context.fillRect(
+            0,
+            0,
+            divDimensions.w,
+            divDimensions.h
+        )
+
+        context.fillStyle = "#ffffff"
+        context.font = "bold 40px Arial"
+        context.fillText(
+            "READY?",
+            divDimensions.w / 2 - 70,
+            divDimensions.h / 3
+        )
+
+        context.font = "bold 20px Arial"
+        context.fillText(
+            "Press Space to Start",
+            divDimensions.w / 2 - 95,
+            divDimensions.h / 2
+        )
+        context.restore()
+    }
+
+    drawStageSummary(context, canvas) {
+        const centerX = canvas.width / 2
+        const centerY = canvas.height / 2
+        const completed = this.stage.result === "completed"
+
+        context.save()
+        context.fillStyle = "#181818cb"
+        context.fillRect(centerX - 170, centerY - 150, 340, 300)
+        context.textAlign = "center"
+        context.fillStyle = completed ? "#2ea300" : "#e40f0f"
+        context.font = "bold 36px Arial"
+        context.fillText(
+            completed ? "STAGE COMPLETED" : "STAGE FAILED",
+            centerX,
+            centerY - 70
+        )
+        context.fillStyle = "#fff"
+        context.font = "20px Arial"
+        context.fillText(`Score: ${this.score}`, centerX, centerY)
+        context.fillText("Press Space to Continue", centerX, centerY + 80)
+        context.restore()
     }
 
 }

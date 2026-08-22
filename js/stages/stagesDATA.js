@@ -4,14 +4,13 @@ export const stages = {
         id: 1,
         name: "First Contact",
         bgImageSRC: "./assets/backgrounds/bg_stage1.png",
-        totalEnemies: 10,
-        timeLimit: 10,
+        timeLimit: 60,
 
         events: [
             {
                 time: 2,
                 type: "spawnEnemy",
-                amount: 3,
+                amount: 1,
                 side: "top",
                 target: { x: 400, y: 250 }
             },
@@ -19,15 +18,15 @@ export const stages = {
             {
                 time: 10,
                 type: "spawnEnemy",
-                amount: 3,
+                amount: 1,
                 side: "left",
                 target: { x: 250, y: 400 }
             },
 
             {
-                time: 20,
+                time: 15,
                 type: "spawnEnemy",
-                amount: 4,
+                amount: 2,
                 side: "right",
                 target: { x: 550, y: 400 }
             }
@@ -39,36 +38,35 @@ export const stages = {
         id: 2,
         name: "Crossfire",
         bgImageSRC: "./assets/backgrounds/bg_stage2.png",
-        totalEnemies: 15,
-        timeLimit: 10,
+        timeLimit: 60,
 
         events: [
             {
                 time: 2,
                 type: "spawnEnemy",
-                amount: 4,
+                amount: 2,
                 side: "top",
                 target: { x: 400, y: 250 }
             },
 
             {
-                time: 12,
+                time: 10,
                 type: "spawnEnemy",
-                amount: 4,
+                amount: 2,
                 side: "left",
                 target: { x: 250, y: 400 }
             },
 
             {
-                time: 22,
+                time: 15,
                 type: "spawnEnemy",
-                amount: 4,
+                amount: 2,
                 side: "right",
                 target: { x: 550, y: 400 }
             },
 
             {
-                time: 35,
+                time: 20,
                 type: "spawnEnemy",
                 amount: 3,
                 side: "bottom",

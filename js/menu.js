@@ -27,69 +27,67 @@ export class Menu {
         ]
 
         this.selectedIndex = 0
-        this.canMove = true
         this.availableOptions = []
     }
 
 
-    update(keys, canvas) {
+    update(keysPressed, canvas) {
         /// Ubicación en el canvas
-        this.position = { x: canvas.width / 2, y: canvas.height / 3 * 2 }
+        this.position = { x: canvas.width / 2, y: canvas.height / 2 }
 
 
         this.availableOptions = this.options.filter(ele => ele.isAvailable)
 
-        if (this.canMove) {
-            if (keys.ArrowDown || keys.s) {
 
+        if (keysPressed.ArrowDown || keysPressed.s) {
+
+            this.selectedIndex++
+            if (this.selectedIndex >= this.availableOptions.length) {
+                this.selectedIndex = 0
+            }
+            if (!this.availableOptions[this.selectedIndex].isAvailable) {
                 this.selectedIndex++
-                if (this.selectedIndex >= this.availableOptions.length) {
-                    this.selectedIndex = 0
-                }
-                if (!this.availableOptions[this.selectedIndex].isAvailable) {
-                    this.selectedIndex++
-                }
-
-                this.canMove = false
             }
 
-            if (keys.ArrowUp || keys.w) {
 
+        }
+
+        if (keysPressed.ArrowUp || keysPressed.w) {
+
+            this.selectedIndex--
+
+            if (this.selectedIndex < 0) {
+                this.selectedIndex = this.availableOptions.length - 1
+            }
+            if (!this.availableOptions[this.selectedIndex].isAvailable) {
                 this.selectedIndex--
-
-                if (this.selectedIndex < 0) {
-                    this.selectedIndex = this.availableOptions.length - 1
-                }
-                if (!this.availableOptions[this.selectedIndex].isAvailable) {
-                    this.selectedIndex--
-                }
-
-                this.canMove = false
             }
+
+
         }
 
         if (
-            !keys.ArrowDown &&
-            !keys.ArrowUp &&
-            !keys.w &&
-            !keys.s
+            !keysPressed.ArrowDown &&
+            !keysPressed.ArrowUp &&
+            !keysPressed.w &&
+            !keysPressed.s
         ) {
             this.canMove = true
         }
 
-        if (keys[" "]) {
+        if (keysPressed[" "]) {
 
             return this.availableOptions[this.selectedIndex]
         }
     }
 
-    draw(context, canvas) {
+    draw(context) {
 
         const objectPosition = { x: 0, y: 0 }
         objectPosition.x = this.position.x - this.dimensions.w / 2
         objectPosition.y = this.position.y - this.dimensions.h / 2
 
-        context.fillStyle = "#1818189c"
+        context.fillStyle = "#181818cb"
         context.fillRect(
             objectPosition.x,
             objectPosition.y,
