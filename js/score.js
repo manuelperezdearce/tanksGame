@@ -88,11 +88,6 @@ export class Score {
 
     setState(newState) {
 
-        // if (this.state === newState) {
-        //     console.log("no paso nada")
-        //     return
-        // }
-
         this.state = newState
 
         this.onEnterState(newState)
@@ -166,10 +161,6 @@ export class Score {
                 localStorage.getItem(
                     this.storageKey
                 )
-
-            console.log(data)
-
-
             if (data) {
 
                 this.scores =
