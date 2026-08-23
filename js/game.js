@@ -395,6 +395,9 @@ export class Game {
     loadStage(stageId) {
         this.stage = new Stage(stages[stageId])
         this.player.position = { x: 500, y: 500 }
+        this.player.tank.hp = 5
+        this.player.life = this.player.tank.hp
+        this.player.isAlive = true
         this.enemies = []
         this.bullets = []
         this.stateAfterReady = "running"

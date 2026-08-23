@@ -13,8 +13,19 @@ export class Stage {
         )
         this.timeLimit = stage.timeLimit
         this.elapsedTime = 0
+        this.backgroundColor = stage.bgColor || "#263238"
+        this.backgroundLoaded = false
         this.backgroundImage = new Image()
-        this.backgroundImage.src = stage.bgImageSRC
+        this.backgroundImage.onload = () => {
+            this.backgroundLoaded = true
+        }
+        this.backgroundImage.onerror = () => {
+            this.backgroundLoaded = false
+        }
+
+        if (stage.bgImageSRC) {
+            this.backgroundImage.src = stage.bgImageSRC
+        }
         this.remainingTime = this.timeLimit
         this.state = "running"
         this.result = null  //// completed, failed
@@ -35,13 +46,23 @@ export class Stage {
     /// Dibujar
     draw(context, canvas) {
 
-        context.drawImage(
-            this.backgroundImage,
+        context.fillStyle = this.backgroundColor
+        context.fillRect(
             0,
             0,
             canvas.width,
             canvas.height
         )
+
+        if (this.backgroundLoaded) {
+            context.drawImage(
+                this.backgroundImage,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            )
+        }
     }
 
     /// Acciones

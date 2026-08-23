@@ -4,11 +4,27 @@ Tanks es un juego 2D desarrollado con JavaScript vanilla y Canvas. El jugador co
 
 El proyecto fue construido como un MVP de portafolio, priorizando funcionalidad, código comprensible y una arquitectura directa sin frameworks ni dependencias externas.
 
+## Capturas del juego
+
+### Menú principal
+
+![Menú principal de Tanks](docs/screenshots/main-menu.png)
+
+### Gameplay
+
+![Partida en el Stage 1 de Tanks](docs/screenshots/game.png)
+
+### Escenarios
+
+| Stage 1 | Stage 2 |
+| --- | --- |
+| ![Escenario del Stage 1](assets/backgrounds/bg_stage1.png) | ![Escenario del Stage 2](assets/backgrounds/bg_stage2.png) |
+
 ## Características
 
 - Menú principal con nueva partida, continuación y ranking.
 - Pantalla de preparación antes de comenzar o reanudar una partida.
-- Dos etapas con fondos, duración y oleadas diferentes.
+- Doce etapas con duración y oleadas de dificultad progresiva.
 - Enemigos generados mediante eventos temporizados.
 - Enemigos compuestos por tanque y cañón, igual que el jugador.
 - IA básica capaz de moverse, apuntar y disparar.
