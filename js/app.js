@@ -48,8 +48,8 @@ export class App {
 
         /// INPUT LAUNCH
         this.detectarTeclado()
-        this.detectarClick()
-        this.detectarMouse()
+        this.detectarPuntero()
+        this.detectarControlesTactiles()
     }
 
     update(deltaTime) {
@@ -234,30 +234,123 @@ export class App {
         })
 
     }
-    detectarMouse() {
-        this.canvas.addEventListener("mousemove", (event) => {
-            this.mousePosition = this.getMousePosition(event)
-        });
-    }
-    detectarClick() {
-        this.canvas.addEventListener("click", (event) => {
-            this.mousePosition = this.getMousePosition(event)
+    detectarPuntero() {
+        this.canvas.addEventListener("pointermove", (event) => {
+            if (!event.isPrimary) {
+                return
+            }
+
+            this.mousePosition = this.getPointerPosition(event)
+        })
+
+        this.canvas.addEventListener("pointerdown", (event) => {
+            if (
+                !event.isPrimary ||
+                (event.pointerType === "mouse" && event.button !== 0)
+            ) {
+                return
+            }
+
+            event.preventDefault()
+            this.requestFullscreenOnMobile()
+            this.mousePosition = this.getPointerPosition(event)
             this.mousePressed = true
             this.updateMusic()
         })
     }
 
-    getMousePosition(event) {
+    detectarControlesTactiles() {
+        const controlKeys = {
+            up: "w",
+            left: "a",
+            down: "s",
+            right: "d",
+            select: " ",
+            back: "Escape"
+        }
+
+        const buttons =
+            document.querySelectorAll("[data-control]")
+
+        buttons.forEach(button => {
+            const control = button.dataset.control
+
+            button.addEventListener("pointerdown", (event) => {
+                event.preventDefault()
+                this.requestFullscreenOnMobile()
+                button.setPointerCapture(event.pointerId)
+                button.classList.add("is-active")
+                this.updateMusic()
+
+                const key = controlKeys[control]
+
+                if (!this.keysHeld[key]) {
+                    this.keysPressed[key] = true
+                }
+
+                this.keysHeld[key] = true
+            })
+
+            const releaseControl = () => {
+                button.classList.remove("is-active")
+                this.keysHeld[controlKeys[control]] = false
+            }
+
+            button.addEventListener("pointerup", releaseControl)
+            button.addEventListener("pointercancel", releaseControl)
+            button.addEventListener("lostpointercapture", releaseControl)
+        })
+    }
+
+    requestFullscreenOnMobile() {
+        const isMobileLandscape = window.matchMedia(
+            "(pointer: coarse) and (orientation: landscape)"
+        ).matches
+
+        if (
+            !isMobileLandscape ||
+            document.fullscreenElement ||
+            !document.documentElement.requestFullscreen
+        ) {
+            return
+        }
+
+        document.documentElement
+            .requestFullscreen()
+            .catch(() => {
+                // El layout continúa usando el viewport disponible.
+            })
+    }
+
+    getPointerPosition(event) {
 
         const rect = this.canvas.getBoundingClientRect()
         const style = getComputedStyle(this.canvas)
 
         const borderLeft = parseFloat(style.borderLeftWidth)
         const borderTop = parseFloat(style.borderTopWidth)
+        const borderRight = parseFloat(style.borderRightWidth)
+        const borderBottom = parseFloat(style.borderBottomWidth)
+
+        const renderedWidth =
+            rect.width - borderLeft - borderRight
+
+        const renderedHeight =
+            rect.height - borderTop - borderBottom
+
+        const scaleX =
+            this.canvas.width / renderedWidth
+
+        const scaleY =
+            this.canvas.height / renderedHeight
 
         return {
-            x: event.clientX - rect.left - borderLeft,
-            y: event.clientY - rect.top - borderTop
+            x:
+                (event.clientX - rect.left - borderLeft) *
+                scaleX,
+            y:
+                (event.clientY - rect.top - borderTop) *
+                scaleY
         }
     }
 

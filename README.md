@@ -25,6 +25,8 @@ El proyecto fue construido como un MVP de portafolio, priorizando funcionalidad,
 - Menú principal con nueva partida, continuación y ranking.
 - Pantalla de preparación antes de comenzar o reanudar una partida.
 - Doce etapas con duración y oleadas de dificultad progresiva.
+- Recuperación de la vida del jugador al comenzar una nueva etapa.
+- Fondos reutilizables con un color de respaldo si la imagen no está disponible.
 - Enemigos generados mediante eventos temporizados.
 - Enemigos compuestos por tanque y cañón, igual que el jugador.
 - IA básica capaz de moverse, apuntar y disparar.
@@ -86,9 +88,11 @@ La etapa termina con victoria cuando se generaron y eliminaron todos sus enemigo
 
 Después de superar una etapa:
 
-- Si quedan más etapas, se carga la siguiente.
+- Si quedan más etapas, se carga la siguiente y se restaura la vida del jugador.
 - Si era la última etapa, la partida termina con victoria.
 - Si la etapa fue perdida, la partida termina en `game over`.
+
+La campaña contiene doce etapas. Sus oleadas aumentan progresivamente en cantidad y cambian las direcciones desde las que aparecen los enemigos.
 
 ## Ejecutar el proyecto
 
@@ -126,7 +130,7 @@ El juego utiliza una estructura basada en clases con responsabilidades concretas
 - `App`: administra el Canvas, el input, el game loop y las pantallas principales.
 - `Menu`: controla las opciones, Settings y la navegación del menú.
 - `Game`: coordina jugador, enemigos, balas, colisiones, HUD y progresión.
-- `Stage`: controla el tiempo, las oleadas y el resultado de cada etapa.
+- `Stage`: controla el tiempo, las oleadas, el resultado y el fondo de cada etapa. Si una imagen no carga, utiliza un color de respaldo.
 - `Player`: representa tanto al usuario como a los jugadores controlados por IA.
 - `Tank`: contiene el cuerpo, vida, velocidad y representación visual del vehículo.
 - `Canon`: apunta y genera los datos de cada disparo.
@@ -195,7 +199,7 @@ El almacenamiento contiene los settings de música y efectos junto con el rankin
 
 ## Posibles mejoras
 
-Estas ideas quedan fuera del alcance de la versión 1.0:
+Estas ideas quedan fuera del alcance de la versión actual:
 
 - Incorporar más vehículos y armas.
 - Añadir obstáculos y colisiones entre entidades.
