@@ -59,7 +59,14 @@ export class Game {
 
     ///// ACTUALIZAR ////////
 
-    update(deltaTime, keysPressed, keysHeld, mousePosition, mouseClicked) {
+    update(
+        deltaTime,
+        keysPressed,
+        keysHeld,
+        mousePosition,
+        mouseClicked,
+        joystickDirection
+    ) {
 
         if (this.state === "ready") {
             this.updateHUD(mousePosition)
@@ -89,7 +96,14 @@ export class Game {
             }
 
 
-            this.player.update(deltaTime, keysPressed, keysHeld, mousePosition);
+            this.player.update(
+                deltaTime,
+                keysPressed,
+                keysHeld,
+                mousePosition,
+                null,
+                joystickDirection
+            );
 
             if (mouseClicked) {
 

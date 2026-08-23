@@ -13,6 +13,7 @@ export class App {
         this.keysPressed = {}
         this.mousePosition = { x: 0, y: 0 }
         this.mousePressed = false
+        this.joystickDirection = null
 
         this.previousState = null
         this.state = "menu" /// menu score game pause
@@ -50,6 +51,7 @@ export class App {
         this.detectarTeclado()
         this.detectarPuntero()
         this.detectarControlesTactiles()
+        this.detectarJoystick()
     }
 
     update(deltaTime) {
@@ -95,7 +97,8 @@ export class App {
                     this.keysPressed,
                     this.keysHeld,
                     this.mousePosition,
-                    this.mousePressed
+                    this.mousePressed,
+                    this.joystickDirection
                 )
                 if (this.game.state === "finished") {
                     this.score.prepareNewScore(
@@ -236,7 +239,7 @@ export class App {
     }
     detectarPuntero() {
         this.canvas.addEventListener("pointermove", (event) => {
-            if (!event.isPrimary) {
+            if (event.pointerType === "mouse" && !event.isPrimary) {
                 return
             }
 
@@ -245,8 +248,8 @@ export class App {
 
         this.canvas.addEventListener("pointerdown", (event) => {
             if (
-                !event.isPrimary ||
-                (event.pointerType === "mouse" && event.button !== 0)
+                event.pointerType === "mouse" &&
+                (!event.isPrimary || event.button !== 0)
             ) {
                 return
             }
@@ -261,10 +264,6 @@ export class App {
 
     detectarControlesTactiles() {
         const controlKeys = {
-            up: "w",
-            left: "a",
-            down: "s",
-            right: "d",
             select: " ",
             back: "Escape"
         }
@@ -300,6 +299,101 @@ export class App {
             button.addEventListener("pointercancel", releaseControl)
             button.addEventListener("lostpointercapture", releaseControl)
         })
+    }
+
+    detectarJoystick() {
+        const joystick = document.querySelector("[data-joystick]")
+
+        if (!joystick) {
+            return
+        }
+
+        const knob = joystick.querySelector(".joystick-knob")
+        const joystickKeys = ["w", "a", "s", "d"]
+        let activePointerId = null
+
+        const setKey = (key, isActive) => {
+            if (isActive && !this.keysHeld[key]) {
+                this.keysPressed[key] = true
+            }
+
+            this.keysHeld[key] = isActive
+        }
+
+        const updateJoystick = (event) => {
+            if (event.pointerId !== activePointerId) {
+                return
+            }
+
+            const rect = joystick.getBoundingClientRect()
+            const centerX = rect.left + rect.width / 2
+            const centerY = rect.top + rect.height / 2
+            const maxDistance =
+                (rect.width - knob.offsetWidth) / 2 - 3
+            const deadZone = maxDistance * 0.3
+
+            const deltaX = event.clientX - centerX
+            const deltaY = event.clientY - centerY
+            const distance = Math.hypot(deltaX, deltaY)
+            const ratio = distance > maxDistance
+                ? maxDistance / distance
+                : 1
+
+            const positionX = deltaX * ratio
+            const positionY = deltaY * ratio
+
+            knob.style.transform =
+                `translate(calc(-50% + ${positionX}px), ` +
+                `calc(-50% + ${positionY}px))`
+
+            if (this.state === "game") {
+                joystickKeys.forEach(key => setKey(key, false))
+
+                this.joystickDirection = distance > deadZone
+                    ? {
+                        x: deltaX / distance,
+                        y: deltaY / distance
+                    }
+                    : null
+
+                return
+            }
+
+            this.joystickDirection = null
+            setKey("w", deltaY < -deadZone)
+            setKey("s", deltaY > deadZone)
+            setKey("a", deltaX < -deadZone)
+            setKey("d", deltaX > deadZone)
+        }
+
+        const releaseJoystick = (event) => {
+            if (event.pointerId !== activePointerId) {
+                return
+            }
+
+            activePointerId = null
+            this.joystickDirection = null
+            knob.style.transform = "translate(-50%, -50%)"
+            joystickKeys.forEach(key => setKey(key, false))
+        }
+
+        joystick.addEventListener("pointerdown", (event) => {
+            if (activePointerId !== null) {
+                return
+            }
+
+            event.preventDefault()
+            activePointerId = event.pointerId
+            joystick.setPointerCapture(event.pointerId)
+            this.requestFullscreenOnMobile()
+            this.updateMusic()
+            updateJoystick(event)
+        })
+
+        joystick.addEventListener("pointermove", updateJoystick)
+        joystick.addEventListener("pointerup", releaseJoystick)
+        joystick.addEventListener("pointercancel", releaseJoystick)
+        joystick.addEventListener("lostpointercapture", releaseJoystick)
     }
 
     requestFullscreenOnMobile() {
@@ -363,6 +457,15 @@ export class App {
         else {
             this.previousState = this.state
             this.state = newState
+            this.joystickDirection = null
+
+            if (newState === "game") {
+                this.keysHeld.w = false
+                this.keysHeld.a = false
+                this.keysHeld.s = false
+                this.keysHeld.d = false
+            }
+
             this.onEnterState(newState)
             this.updateMusic()
         }

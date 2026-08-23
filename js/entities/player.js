@@ -25,11 +25,22 @@ export class Player {
     }
 
     ////// GAME ///////
-    update(deltaTime, keysPressed, keysHeld, mousePosition, target) {
+    update(
+        deltaTime,
+        keysPressed,
+        keysHeld,
+        mousePosition,
+        target,
+        joystickDirection = null
+    ) {
 
         if (this.isHuman) {
 
-            this.move(deltaTime, keysHeld)
+            if (joystickDirection) {
+                this.moveWithJoystick(deltaTime, joystickDirection)
+            } else {
+                this.move(deltaTime, keysHeld)
+            }
             this.aim(mousePosition)
 
         } else {
@@ -163,6 +174,26 @@ export class Player {
         this.position.x += directionX * desplazamiento;
         this.position.y += directionY * desplazamiento;
 
+    }
+
+    moveWithJoystick(deltaTime, direction) {
+        const targetAngle = Math.atan2(direction.y, direction.x)
+        const angleDifference = Math.atan2(
+            Math.sin(targetAngle - this.angle),
+            Math.cos(targetAngle - this.angle)
+        )
+        const maxRotation = this.rotationSpeed * deltaTime
+
+        this.angle += Math.max(
+            -maxRotation,
+            Math.min(maxRotation, angleDifference)
+        )
+
+        this.position.x +=
+            Math.cos(this.angle) * this.speed * deltaTime
+
+        this.position.y +=
+            Math.sin(this.angle) * this.speed * deltaTime
     }
 
     aim(mousePosition) {

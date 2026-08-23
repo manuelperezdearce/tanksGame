@@ -57,32 +57,32 @@
         user-select: none;
     }
 
-    .direction-controls {
-        flex: 0 0 auto;
+    .joystick {
+        position: relative;
+        flex: 0 0 120px;
 
-        display: grid;
-        grid-template-columns: repeat(3, 52px);
-        grid-template-rows: repeat(2, 52px);
-        gap: 4px;
+        width: 120px;
+        height: 120px;
+        border: 3px solid #ffffff;
+        border-radius: 50%;
+        background-color: #272b3288;
+
+        touch-action: none;
     }
 
-    .control-up {
-        grid-column: 2;
-    }
+    .joystick-knob {
+        position: absolute;
+        left: 50%;
+        top: 50%;
 
-    .control-left {
-        grid-column: 1;
-        grid-row: 2;
-    }
+        width: 54px;
+        height: 54px;
+        border: 2px solid #ffffff;
+        border-radius: 50%;
+        background-color: #d6c900;
 
-    .control-down {
-        grid-column: 2;
-        grid-row: 2;
-    }
-
-    .control-right {
-        grid-column: 3;
-        grid-row: 2;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
     }
 
     .action-controls {
@@ -130,9 +130,10 @@
         gap: 8px;
     }
 
-    .direction-controls {
-        grid-template-columns: repeat(3, 46px);
-        grid-template-rows: repeat(2, 46px);
+    .joystick {
+        flex-basis: 108px;
+        width: 108px;
+        height: 108px;
     }
 
     .control-button {
@@ -176,88 +177,35 @@
         pointer-events: none;
     }
 
-    .direction-controls,
+    .joystick,
     .action-controls {
         pointer-events: auto;
     }
 
-    .direction-controls {
+    .joystick {
         position: fixed;
-        inset: 0;
-
-        display: block;
-
-        pointer-events: none;
-    }
-
-    .direction-controls::before,
-    .direction-controls::after {
-        position: fixed;
-
-        color: #ffffff;
-
-        font-size: 12px;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-
-    .direction-controls::before {
-        content: "TURN";
-        left: calc(var(--mobile-control-inset) + 62px);
-        top: calc(55% - 50px);
-        transform: translateX(-50%);
-    }
-
-    .direction-controls::after {
-        content: "DRIVE";
-        right: calc(var(--mobile-control-inset) + 13px);
-        top: calc(48% - 38px);
-    }
-
-    .direction-controls .control-button {
-        position: fixed;
-        z-index: 11;
-
-        width: 58px;
-        height: 58px;
-        min-width: 58px;
-        min-height: 58px;
-        border-radius: 50%;
-
-        font-size: 24px;
-        pointer-events: auto;
-    }
-
-    .control-left {
         left: max(
             var(--mobile-control-inset),
             env(safe-area-inset-left)
         );
-        top: 55%;
+        top: 50%;
+
+        width: 128px;
+        height: 128px;
+        transform: translateY(-50%);
     }
 
-    .control-right {
-        left: max(
-            calc(var(--mobile-control-inset) + 70px),
-            calc(env(safe-area-inset-left) + 70px)
-        );
-        top: 55%;
-    }
+    .joystick::before {
+        content: "MOVE";
+        position: absolute;
+        left: 50%;
+        top: -26px;
+        transform: translateX(-50%);
 
-    .control-up {
-        right: max(
-            var(--mobile-control-inset),
-            env(safe-area-inset-right)
-        );
-        top: 46%;
-    }
-
-    .control-down {
-        right: max(
-            var(--mobile-control-inset),
-            env(safe-area-inset-right)
-        );
-        top: calc(46% + 70px);
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: bold;
+        letter-spacing: 1px;
     }
 
     .action-controls {
