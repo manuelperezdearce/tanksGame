@@ -1,22 +1,20 @@
-import { Game } from "./game.js";
-import { Menu } from "./menu.js";
-import { Score } from "./score.js";
+import { Game } from "./game/game.js";
+import { Menu } from "./menu/menu.js";
+import { Score } from "./score/score.js";
+import { Controller } from "./controller/Controller.js";
 
 export class App {
-    constructor(canvas) {
+    constructor(inputElements) {
 
-        this.canvas = canvas
-        this.context = canvas.getContext("2d")
+        this.canvas = inputElements.canvas
+        this.context = this.canvas.getContext("2d")
 
         /// USER INPUTS
-        this.keysHeld = {}
-        this.keysPressed = {}
-        this.mousePosition = { x: 0, y: 0 }
-        this.mousePressed = false
         this.joystickDirection = null
 
         this.previousState = null
         this.state = "menu" /// menu score game pause
+        this.controller = new Controller(inputElements)
         this.menu = new Menu()
         this.score = new Score()
         this.game = null
@@ -48,18 +46,19 @@ export class App {
         this.debug = false
 
         /// INPUT LAUNCH
-        this.detectarTeclado()
-        this.detectarPuntero()
         this.detectarControlesTactiles()
         this.detectarJoystick()
     }
 
     update(deltaTime) {
 
+        this.controller.beginFrame()
+        const input = this.controller.getInput()
+
         if (this.state === "menu") {
 
             let selectedOption =
-                this.menu.update(this.keysPressed, this.canvas)
+                this.menu.update(input.keyboard.pressed, this.canvas)
 
             if (selectedOption) {
 
@@ -94,10 +93,10 @@ export class App {
             if (this.game !== null) {
                 this.game.update(
                     deltaTime,
-                    this.keysPressed,
-                    this.keysHeld,
-                    this.mousePosition,
-                    this.mousePressed,
+                    input.keyboard.pressed,
+                    input.keyboard.held,
+                    input.pointer.position,
+                    input.pointer.pressed,
                     this.joystickDirection
                 )
                 if (this.game.state === "finished") {
@@ -106,8 +105,8 @@ export class App {
                         this.game.result
                     )
                     this.setState("score")
-                    this.keysPressed = {}
-                    this.mousePressed = false
+
+                    input.pointer.pressed = false
                     return
                 }
             }
@@ -117,14 +116,14 @@ export class App {
         else if (this.state === "score") {
 
             this.score.update(
-                this.keysPressed,
-                this.keysHeld,
-                this.mousePosition,
-                this.mousePressed
+                input.keyboard.pressed,
+                input.keyboard.held,
+                input.pointer.position,
+                input.pointer.pressed
             )
         }
 
-        if (this.keysPressed.Escape) {
+        if (input.keyboard.pressed.Escape) {
 
             if (this.state === "score") {
                 if (this.game?.state === "finished") {
@@ -137,15 +136,9 @@ export class App {
                 this.setState("menu")
                 this.score.state = "ranking"
             }
-
-
-
-
-
         }
 
-        this.keysPressed = {}
-        this.mousePressed = false
+        this.controller.endFrame()
     }
 
     draw() {
@@ -221,46 +214,6 @@ export class App {
 
     /// UTILIDADES
 
-    detectarTeclado() {
-        window.addEventListener("keydown", (event) => {
-            if (!this.keysHeld[event.key]) {
-                this.keysPressed[event.key] = true
-            }
-
-            this.keysHeld[event.key] = true
-            this.updateMusic()
-        })
-
-
-        window.addEventListener("keyup", (event) => {
-            this.keysHeld[event.key] = false
-        })
-
-    }
-    detectarPuntero() {
-        this.canvas.addEventListener("pointermove", (event) => {
-            if (event.pointerType === "mouse" && !event.isPrimary) {
-                return
-            }
-
-            this.mousePosition = this.getPointerPosition(event)
-        })
-
-        this.canvas.addEventListener("pointerdown", (event) => {
-            if (
-                event.pointerType === "mouse" &&
-                (!event.isPrimary || event.button !== 0)
-            ) {
-                return
-            }
-
-            event.preventDefault()
-            this.requestFullscreenOnMobile()
-            this.mousePosition = this.getPointerPosition(event)
-            this.mousePressed = true
-            this.updateMusic()
-        })
-    }
 
     detectarControlesTactiles() {
         const controlKeys = {
@@ -283,16 +236,16 @@ export class App {
 
                 const key = controlKeys[control]
 
-                if (!this.keysHeld[key]) {
-                    this.keysPressed[key] = true
+                if (!input.keyboard.held[key]) {
+                    input.keyboard.pressed[key] = true
                 }
 
-                this.keysHeld[key] = true
+                input.keyboard.held[key] = true
             })
 
             const releaseControl = () => {
                 button.classList.remove("is-active")
-                this.keysHeld[controlKeys[control]] = false
+                input.keyboard.held[controlKeys[control]] = false
             }
 
             button.addEventListener("pointerup", releaseControl)
@@ -313,11 +266,11 @@ export class App {
         let activePointerId = null
 
         const setKey = (key, isActive) => {
-            if (isActive && !this.keysHeld[key]) {
-                this.keysPressed[key] = true
+            if (isActive && !input.keyboard.held[key]) {
+                input.keyboard.pressed[key] = true
             }
 
-            this.keysHeld[key] = isActive
+            input.keyboard.held[key] = isActive
         }
 
         const updateJoystick = (event) => {
@@ -416,37 +369,7 @@ export class App {
             })
     }
 
-    getPointerPosition(event) {
 
-        const rect = this.canvas.getBoundingClientRect()
-        const style = getComputedStyle(this.canvas)
-
-        const borderLeft = parseFloat(style.borderLeftWidth)
-        const borderTop = parseFloat(style.borderTopWidth)
-        const borderRight = parseFloat(style.borderRightWidth)
-        const borderBottom = parseFloat(style.borderBottomWidth)
-
-        const renderedWidth =
-            rect.width - borderLeft - borderRight
-
-        const renderedHeight =
-            rect.height - borderTop - borderBottom
-
-        const scaleX =
-            this.canvas.width / renderedWidth
-
-        const scaleY =
-            this.canvas.height / renderedHeight
-
-        return {
-            x:
-                (event.clientX - rect.left - borderLeft) *
-                scaleX,
-            y:
-                (event.clientY - rect.top - borderTop) *
-                scaleY
-        }
-    }
 
     /// STATES
 
@@ -459,12 +382,7 @@ export class App {
             this.state = newState
             this.joystickDirection = null
 
-            if (newState === "game") {
-                this.keysHeld.w = false
-                this.keysHeld.a = false
-                this.keysHeld.s = false
-                this.keysHeld.d = false
-            }
+
 
             this.onEnterState(newState)
             this.updateMusic()

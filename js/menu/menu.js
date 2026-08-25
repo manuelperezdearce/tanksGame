@@ -28,6 +28,11 @@ export class Menu {
                 menuName: "Settings",
                 appState: "settings",
                 isAvailable: true
+            },
+            {
+                menuName: "About",
+                appState: "about",
+                isAvailable: true
             }
         ]
 
