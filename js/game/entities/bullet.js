@@ -3,9 +3,10 @@ export class Bullet {
 
     constructor(shotData) {
 
-
-        this.speed = 500 + shotData.speedPlus
+        this.initialSpeed = 500
         this.team = shotData.team
+        this.speed = this.calculateFinalSpeed(this.initialSpeed, shotData.speedPlus)
+
         this.color = this.team === "ally" ? "#ebfc00" : "#ff0d00"
         this.direction = {
             x: shotData.direction.x,
@@ -50,6 +51,16 @@ export class Bullet {
 
     destroy() {
         this.isAlive = false
+    }
+
+    /// UTILITIES
+
+    calculateFinalSpeed(initialSpeed, speedPlus) {
+        console.log(this.team)
+        const penalization = this.team === "ally" ? 1 : 0.5
+
+        return initialSpeed * speedPlus * penalization
+
     }
 }
 

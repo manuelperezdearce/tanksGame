@@ -4,7 +4,7 @@ export class Canon {
     constructor() {
         this.width = 25
         this.height = 50
-        this.speedPlus = 300
+        this.speedPlus = 1.6
         this.color = "#054d1d"
         this.angle = 0
         this.canonImage = new Image()
