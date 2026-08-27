@@ -50,7 +50,7 @@ export class EnterScore {
     //////////////////////////////
 
     update(
-        keysPressed,
+        input,
         score,
         gameStatus
     ) {
@@ -60,23 +60,32 @@ export class EnterScore {
         this.gameStatus =
             gameStatus
 
+        if (
+            input.keyboard.pressed.Escape ||
+            input.touchButtons.pressed.B
+        ) {
+            return { action: "back" }
+        }
 
         if (this.state === "editing") {
 
             this.enterPlayerName(
-                keysPressed
+                input
             )
 
 
             if (
-                keysPressed.Enter ||
-                keysPressed[" "]
+                input.keyboard.pressed.Enter ||
+                input.keyboard.pressed[" "] ||
+                input.touchButtons.pressed.A
             ) {
 
                 this.state =
                     "completed"
             }
         }
+
+        return null
     }
 
 
@@ -170,9 +179,9 @@ export class EnterScore {
         /// HELP
 
         const text =
-            `Use "WASD" to Move\n` +
-            `Press "Space" to Save\n` +
-            `Press "ESC" to Main Menu`
+            `D-Pad: Edit Name\n` +
+            `A: Save - B: Back\n` +
+            `WASD: Edit - ESC: Back`
 
 
         const lines =
@@ -180,10 +189,10 @@ export class EnterScore {
 
 
         context.fillStyle =
-            "#9b1f0f"
+            "#d24a38"
 
         context.font =
-            "bold 14px Arial"
+            "bold 16px Arial"
 
 
         lines.reverse().forEach((line, index) => {
@@ -209,11 +218,13 @@ export class EnterScore {
     /// ACTIONS
     //////////////////////////////
 
-    enterPlayerName(keysPressed) {
+    enterPlayerName(input) {
+        const keysHeld = input.keyboard.held
+        const touchButtons = input.touchButtons.pressed
 
         /// MOVER ENTRE POSICIONES
 
-        if (keysPressed.d) {
+        if (keysHeld.d || touchButtons.dRight) {
 
             this.playerNameSelectedIndex++
 
@@ -229,7 +240,7 @@ export class EnterScore {
         }
 
 
-        if (keysPressed.a) {
+        if (keysHeld.a || touchButtons.dLeft) {
 
             this.playerNameSelectedIndex--
 
@@ -247,7 +258,7 @@ export class EnterScore {
 
         /// CAMBIAR CARACTER
 
-        if (keysPressed.w) {
+        if (keysHeld.w || touchButtons.dTop) {
 
             this.charArrayIndex++
 
@@ -263,7 +274,7 @@ export class EnterScore {
         }
 
 
-        if (keysPressed.s) {
+        if (keysHeld.s || touchButtons.dBottom) {
 
             this.charArrayIndex--
 

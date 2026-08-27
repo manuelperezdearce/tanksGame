@@ -12,42 +12,31 @@ export class Player {
         this.canon = new Canon(this.tank.mount)
         this.tank.hp = this.isAlly ? 5 : 2
         this.life = this.tank.hp
+        this.maxAmmo = isHuman ? 10 : 8
+        this.ammo = this.maxAmmo
         this.pointer = { x: 0, y: 0 }
         this.dimensions = { w: this.tank.width, h: this.tank.height }
         this.speed = this.tank.speed
         this.rotationSpeed = this.tank.rotationSpeed
         this.angle = - Math.PI / 2
         this.isAlive = true
-        this.fireCooldown = 2.5
-        this.timeUntilNextShot = this.isHuman
-            ? 0
-            : 1 + Math.random() * this.fireCooldown
     }
 
     ////// GAME ///////
     update(
         deltaTime,
-        keysPressed,
-        keysHeld,
-        mousePosition,
-        target,
-        joystickDirection = null
+        input
     ) {
-
-        if (this.isHuman) {
-
-            if (joystickDirection) {
-                this.moveWithJoystick(deltaTime, joystickDirection)
-            } else {
-                this.move(deltaTime, keysHeld)
-            }
-            this.aim(mousePosition)
-
+        if (input.joystick.direction) {
+            this.moveWithJoystick(
+                deltaTime,
+                input.joystick.direction
+            )
         } else {
-
-            this.moveCPU(deltaTime, target)
-            this.aimCPU(target)
+            this.move(deltaTime, input.keyboard.held)
         }
+
+        this.aim(input.pointer.position)
 
         this.tank.update(
             this.position,
@@ -59,9 +48,6 @@ export class Player {
             this.tank.canonMount
         )
 
-        if (!this.isHuman) {
-            return this.shootCPU(deltaTime)
-        }
     }
 
     draw(context, canvas) {
@@ -190,44 +176,30 @@ export class Player {
         )
 
         this.position.x +=
-            Math.cos(this.angle) * this.speed * deltaTime
+            Math.cos(this.angle) *
+            this.speed *
+            deltaTime
 
         this.position.y +=
-            Math.sin(this.angle) * this.speed * deltaTime
+            Math.sin(this.angle) *
+            this.speed *
+            deltaTime
     }
 
     aim(mousePosition) {
         this.pointer.x = mousePosition.x
         this.pointer.y = mousePosition.y
     }
-    aimCPU(target) {
-
-        this.pointer.x =
-            target.position.x
-
-        this.pointer.y =
-            target.position.y
-    }
-
     shoot() {
+        if (this.ammo <= 0) {
+            return null
+        }
+
+        this.ammo--
         const shotData = this.canon.getShotData()
         shotData.team = this.isAlly ? "ally" : "enemy"
 
         return shotData
-    }
-
-    shootCPU(deltaTime) {
-
-        this.timeUntilNextShot -= deltaTime
-
-        if (this.timeUntilNextShot <= 0) {
-
-            this.timeUntilNextShot = this.fireCooldown
-
-            return this.shoot()
-        }
-
-        return null
     }
 
     ////// UTILIDADES //////
@@ -236,100 +208,6 @@ export class Player {
         this.tank.takeDamge(bulletDamage)
         this.life = this.tank.hp
         if (this.life <= 0) { this.isAlive = false }
-    }
-
-    moveCPU(deltaTime, target) {
-
-        const dx =
-            target.position.x -
-            this.position.x
-
-        const dy =
-            target.position.y -
-            this.position.y
-
-
-        const distance = Math.sqrt(
-            dx ** 2 +
-            dy ** 2
-        )
-
-
-        const minDistance = 180
-        const maxDistance = 320
-
-
-        let movement = 0
-
-
-        if (distance > maxDistance) {
-            movement = 1
-        }
-
-        if (distance < minDistance) {
-            movement = -1
-        }
-
-
-        const targetAngle =
-            Math.atan2(dy, dx)
-
-
-        let angleDifference =
-            targetAngle -
-            this.angle
-
-
-        angleDifference =
-            Math.atan2(
-                Math.sin(angleDifference),
-                Math.cos(angleDifference)
-            )
-
-
-        let steering = 0
-
-
-        if (angleDifference < -0.05) {
-            steering = -1
-        }
-
-        if (angleDifference > 0.05) {
-            steering = 1
-        }
-
-
-        if (movement !== 0) {
-
-            this.angle +=
-                steering *
-                this.rotationSpeed *
-                deltaTime *
-                movement
-        }
-
-
-        const directionX =
-            Math.cos(this.angle)
-
-        const directionY =
-            Math.sin(this.angle)
-
-
-        const desplazamiento =
-            this.speed *
-            movement *
-            deltaTime
-
-
-        this.position.x +=
-            directionX *
-            desplazamiento
-
-        this.position.y +=
-            directionY *
-            desplazamiento
-
     }
 
     getHitbox() {

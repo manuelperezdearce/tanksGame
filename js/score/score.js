@@ -7,6 +7,8 @@ export class Score {
         this.storageKey = "tanksStorage"
 
         this.scores = []
+        this.currentPage = 0
+        this.scoresPerPage = 6
 
         this.state = "ranking"
         // ranking
@@ -35,14 +37,18 @@ export class Score {
     /// GAME LOOP
     //////////////////////////////
 
-    update(keysPressed) {
+    update(input) {
         if (this.state === "enterName") {
 
-            this.enterScore.update(
-                keysPressed,
+            const action = this.enterScore.update(
+                input,
                 this.pendingScore,
                 this.pendingGameStatus
             )
+
+            if (action?.action === "back") {
+                return action
+            }
 
 
             if (this.enterScore.state === "completed") {
@@ -58,6 +64,33 @@ export class Score {
                 this.setState("ranking")
             }
         }
+
+        if (
+            this.state === "ranking"
+        ) {
+            if (
+                input.keyboard.pressed.a ||
+                input.touchButtons.pressed.dLeft
+            ) {
+                this.previousPage()
+            }
+
+            if (
+                input.keyboard.pressed.d ||
+                input.touchButtons.pressed.dRight
+            ) {
+                this.nextPage()
+            }
+
+            if (
+                input.keyboard.pressed.Escape ||
+                input.touchButtons.pressed.B
+            ) {
+                return { action: "back" }
+            }
+        }
+
+        return null
     }
 
 
@@ -98,6 +131,7 @@ export class Score {
 
         if (state === "ranking") {
 
+            this.currentPage = 0
             this.loadScores()
         }
 
@@ -175,6 +209,11 @@ export class Score {
                 this.scores = []
             }
 
+            this.currentPage = Math.min(
+                this.currentPage,
+                this.getPageCount() - 1
+            )
+
         } catch (error) {
 
             console.log(
@@ -232,6 +271,27 @@ export class Score {
     //////////////////////////////
     /// DRAW
     //////////////////////////////
+
+    getPageCount() {
+        return Math.max(
+            1,
+            Math.ceil(this.scores.length / this.scoresPerPage)
+        )
+    }
+
+    nextPage() {
+        this.currentPage = Math.min(
+            this.currentPage + 1,
+            this.getPageCount() - 1
+        )
+    }
+
+    previousPage() {
+        this.currentPage = Math.max(
+            this.currentPage - 1,
+            0
+        )
+    }
 
     drawRanking(context, canvas) {
 
@@ -298,8 +358,15 @@ export class Score {
             let tableY = 150
 
 
-            this.scores.forEach(
-                (score) => {
+            const pageStart =
+                this.currentPage * this.scoresPerPage
+            const pageScores = this.scores.slice(
+                pageStart,
+                pageStart + this.scoresPerPage
+            )
+
+            pageScores.forEach(
+                (score, index) => {
 
 
                     let columnX =
@@ -311,7 +378,7 @@ export class Score {
                     context.fillStyle =
                         "#fff"
                     context.fillText(
-                        `${this.scores.indexOf(score) + 1}`,
+                        `${pageStart + index + 1}`,
                         columnX,
                         tableY
                     )
@@ -331,21 +398,28 @@ export class Score {
                     tableY += 40
                 }
             )
+
+            context.font = "16px Arial"
+            context.fillText(
+                `Page ${this.currentPage + 1} / ${this.getPageCount()}`,
+                this.dimensions.w / 2,
+                this.dimensions.h - 42
+            )
         }
 
 
         /// HELP
 
         context.fillStyle =
-            "#611107"
+            "#d24a38"
 
         context.font =
-            "bold 14px Arial"
+            "bold 16px Arial"
 
         context.fillText(
-            `Press "ESC" to Back`,
+            `D-Pad Left/Right: Pages - A/D: Pages - B: Back`,
             10,
-            this.dimensions.h - 10
+            this.dimensions.h - 14
         )
 
 

@@ -1,9 +1,12 @@
 export class HUD {
     constructor() {
+        this.visible = true
         this.playerLife = 0
         this.score = 0
         this.enemiesDefeated = 0
         this.totalEnemies = 0
+        this.ammo = 0
+        this.maxAmmo = 0
         this.mousePosition = { x: 0, y: 0 }
 
         this.heartImage = new Image()
@@ -25,13 +28,22 @@ export class HUD {
         mousePosition,
         enemiesDefeated,
         totalEnemies,
-        stage
+        stage,
+        ammo,
+        maxAmmo,
+        input
     ) {
+        if (input?.touchButtons?.pressed?.select) {
+            this.toggleVisibility()
+        }
+
         this.playerLife = playerLife
         this.score = score
         this.mousePosition = mousePosition
         this.enemiesDefeated = enemiesDefeated
         this.totalEnemies = totalEnemies
+        this.ammo = ammo
+        this.maxAmmo = maxAmmo
         this.stage.id = stage.id
         this.stage.name = stage.name
         this.stage.remainingTime = Math.ceil(stage.remainingTime)
@@ -39,7 +51,15 @@ export class HUD {
 
     /// DRAW ////
 
+    toggleVisibility() {
+        this.visible = !this.visible
+    }
+
     draw(canvas, context) {
+        if (!this.visible) {
+            return
+        }
+
         context.save()
 
         context.fillStyle = "#11131883"
@@ -70,6 +90,18 @@ export class HUD {
 
         context.fillStyle = "#ffffff"
         context.fillText(`SCORE ${this.score}`, 30, 77)
+
+        context.textAlign = "left"
+        context.fillStyle = this.ammo === 0
+            ? "#ff3b30"
+            : this.ammo <= 2
+                ? "#d6c900"
+                : "#ffffff"
+        context.fillText(
+            `AMMO ${this.ammo} / ${this.maxAmmo}`,
+            180,
+            77
+        )
 
         context.textAlign = "center"
         context.fillText(

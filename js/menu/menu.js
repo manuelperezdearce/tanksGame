@@ -5,7 +5,6 @@ export class Menu {
 
         this.state = "main"
         this.selectedIndex = 0
-        this.settingsSelectedIndex = 0
         this.availableOptions = []
 
         this.options = [
@@ -50,39 +49,30 @@ export class Menu {
         }
     }
 
-    update(keysPressed, canvas) {
+    update(touchButtons, keysPressed, canvas) {
         this.position = {
             x: canvas.width / 2,
             y: canvas.height / 2
         }
 
-        if (this.state === "settings") {
-            return this.updateSettings(keysPressed)
-        }
-
-        return this.updateMain(keysPressed)
+        return this.updateMain(touchButtons, keysPressed)
     }
 
-    updateMain(keysPressed) {
+    updateMain(touchButtons, keysPressed) {
         this.availableOptions = this.options.filter(
             option => option.isAvailable
         )
 
         this.selectedIndex = this.moveSelection(
+            touchButtons,
             keysPressed,
             this.selectedIndex,
             this.availableOptions.length
         )
 
-        if (keysPressed[" "]) {
+        if (keysPressed[" "] || touchButtons.pressed.A) {
             const selectedOption =
                 this.availableOptions[this.selectedIndex]
-
-            if (selectedOption.appState === "settings") {
-                this.state = "settings"
-                this.settingsSelectedIndex = 0
-                return null
-            }
 
             return selectedOption
         }
@@ -90,67 +80,20 @@ export class Menu {
         return null
     }
 
-    updateSettings(keysPressed) {
-        if (keysPressed.Escape) {
-            this.state = "main"
-            return null
-        }
-
-        this.settingsSelectedIndex = this.moveSelection(
-            keysPressed,
-            this.settingsSelectedIndex,
-            this.settingsOptions.length
-        )
-
-        const selectedSetting =
-            this.settingsOptions[this.settingsSelectedIndex]
-
-        if (keysPressed[" "]) {
-            if (selectedSetting === "musicEnabled") {
-                return { action: "toggleMusic" }
-            }
-
-            if (selectedSetting === "effectsEnabled") {
-                return { action: "toggleEffects" }
-            }
-
-            if (selectedSetting === "back") {
-                this.state = "main"
-            }
-        }
-
-        const decrease =
-            keysPressed.a || keysPressed.ArrowLeft
-        const increase =
-            keysPressed.d || keysPressed.ArrowRight
-
-        if (decrease || increase) {
-            const direction = increase ? 1 : -1
-
-            if (selectedSetting === "musicVolume") {
-                return {
-                    action: "changeMusicVolume",
-                    direction
-                }
-            }
-
-            if (selectedSetting === "effectsVolume") {
-                return {
-                    action: "changeEffectsVolume",
-                    direction
-                }
-            }
-        }
-
-        return null
-    }
-
-    moveSelection(keysPressed, currentIndex, optionsLength) {
-        if (keysPressed.ArrowDown || keysPressed.s) {
+    moveSelection(touchButtons, keysPressed, currentIndex, optionsLength) {
+        if (
+            keysPressed.ArrowDown ||
+            keysPressed.s ||
+            touchButtons.pressed.dBottom
+        ) {
             return (currentIndex + 1) % optionsLength
         }
 
-        if (keysPressed.ArrowUp || keysPressed.w) {
+        if (
+            keysPressed.ArrowUp ||
+            keysPressed.w ||
+            touchButtons.pressed.dTop
+        ) {
             return (currentIndex - 1 + optionsLength) % optionsLength
         }
 
@@ -178,12 +121,7 @@ export class Menu {
             this.dimensions.h
         )
 
-        if (this.state === "settings") {
-            this.drawSettings(context)
-        }
-        else {
-            this.drawMain(context)
-        }
+        this.drawMain(context)
 
         context.restore()
     }
@@ -210,47 +148,13 @@ export class Menu {
 
         this.drawHelp(
             context,
-            'Use "W/S" to Move - "Space" to Select'
-        )
-    }
-
-    drawSettings(context) {
-        context.fillStyle = "#ffffff"
-        context.font = "bold 38px Arial"
-        context.textAlign = "center"
-        context.fillText("Settings", this.dimensions.w / 2, 70)
-
-        const values = [
-            `Music: ${this.audioSettings.music.enabled ? "ON" : "OFF"}`,
-            `Music Volume: ${Math.round(this.audioSettings.music.volume * 100)}%`,
-            `Effects: ${this.audioSettings.effects.enabled ? "ON" : "OFF"}`,
-            `Effects Volume: ${Math.round(this.audioSettings.effects.volume * 100)}%`,
-            "Back"
-        ]
-
-        context.font = "21px Arial"
-
-        values.forEach((value, index) => {
-            context.fillStyle = index === this.settingsSelectedIndex
-                ? "#e7e408"
-                : "#ffffff"
-
-            context.fillText(
-                value,
-                this.dimensions.w / 2,
-                140 + index * 50
-            )
-        })
-
-        this.drawHelp(
-            context,
-            'W/S: Move  A/D: Volume  Space: Toggle'
+            'D-Pad: Move - A: Select'
         )
     }
 
     drawHelp(context, text) {
         context.fillStyle = "#d24a38"
-        context.font = "bold 13px Arial"
+        context.font = "bold 16px Arial"
         context.textAlign = "center"
         context.fillText(
             text,
