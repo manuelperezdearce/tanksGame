@@ -12,15 +12,35 @@
 <body id="body">
     <main id="main">
         <canvas id="gameCanvas"></canvas>
+
         <section class="mobile-controls" aria-label="Controles táctiles">
-            <div class="joystick" data-joystick role="application" aria-label="Palanca de movimiento">
-                <div class="joystick-knob"></div>
+
+            <div class="top-controls">
+                <button class="top-button" data-control="select" type="button">Select</button>
+                <button class="top-button" data-control="start" type="button">Start</button>
+
             </div>
 
-            <div class="action-controls">
-                <button class="control-button" data-control="select" type="button">SELECT</button>
-                <button class="control-button" data-control="back" type="button">BACK</button>
+            <div class="left-section">
+                <div class="dpad-controls">
+                    <button class="dpad-button" data-control="dTop" type="button">▲</button>
+                    <button class="dpad-button" data-control="dBottom" type="button">▼</button>
+                    <button class="dpad-button" data-control="dLeft" type="button">◄</button>
+                    <button class="dpad-button" data-control="dRight" type="button">►</button>
+                </div>
+                <div class="joystick" data-joystick role="application" aria-label="Palanca de movimiento">
+                    <div class="joystick-knob"></div>
+                </div>
             </div>
+            <div class="right-section">
+                <div class="action-controls">
+                    <button class="action-button" data-control="B" type="button">B</button>
+                    <button class="action-button" data-control="A" type="button">A</button>
+                    <button class="action-button" data-control="X" type="button">X</button>
+                    <button class="action-button" data-control="Y" type="button">Y</button>
+                </div>
+            </div>
+
         </section>
         <section id="DebugPanel"></section>
 

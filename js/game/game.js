@@ -2,8 +2,10 @@
 
 import { stages } from "./stages/stagesDATA.js";
 import { Player } from "./entities/player.js";
+import { IA } from "./entities/IA.js";
 import { HUD } from "./entities/hud.js";
 import { Bullet } from "./entities/bullet.js";
+import { AmmoPickup } from "./entities/ammoPickup.js";
 import { Stage } from "./stages/stage.js";
 import { Collision } from "./collision.js";
 
@@ -30,7 +32,9 @@ export class Game {
         // Colecciones
         this.allies = []
         this.bullets = []
+        this.ammoPickups = []
         this.enemies = []
+        this.enemyIAs = new Map()
         this.worldBounds = { width: 800, height: 800 }
 
         this.effectsEnabled = effectsEnabled
@@ -53,25 +57,21 @@ export class Game {
 
         this.debug = false
 
-        this.updateHUD({ x: 0, y: 0 })
-
     }
 
     ///// ACTUALIZAR ////////
 
     update(
         deltaTime,
-        keysPressed,
-        keysHeld,
-        mousePosition,
-        mouseClicked,
-        joystickDirection
+        input
     ) {
-
         if (this.state === "ready") {
-            this.updateHUD(mousePosition)
+            this.updateHUD(input)
 
-            if (keysPressed[" "]) {
+            if (
+                input.keyboard.pressed[" "] ||
+                input.touchButtons.pressed.A
+            ) {
                 this.state = this.stateAfterReady
             }
 
@@ -88,6 +88,10 @@ export class Game {
                 if (event.type === "spawnEnemy") {
                     this.spawnEnemies(event)
                 }
+
+                if (event.type === "spawnAmmo") {
+                    this.spawnAmmo(event)
+                }
             })
 
             if (this.stage.state === "finished") {
@@ -98,37 +102,43 @@ export class Game {
 
             this.player.update(
                 deltaTime,
-                keysPressed,
-                keysHeld,
-                mousePosition,
-                null,
-                joystickDirection
+                input
             );
 
-            if (mouseClicked) {
+            if (
+                input.pointer.pressed
+            ) {
 
                 const shotData = this.player.shoot()
-
-                const bullet = new Bullet(
-                    shotData
-                )
-
-                this.bullets.push(bullet)
-                this.playShotSound()
-            }
-
-            this.enemies.forEach(enemy => {
-                const shotData = enemy.update(
-                    deltaTime,
-                    keysPressed,
-                    keysHeld,
-                    mousePosition,
-                    this.player
-                )
 
                 if (shotData) {
                     this.bullets.push(new Bullet(shotData))
                     this.playShotSound()
+                }
+            }
+
+            this.enemies.forEach(enemy => {
+                const enemyInput = this.enemyIAs.get(enemy).update(
+                    deltaTime,
+                    { target: this.player }
+                )
+
+                enemy.update(
+                    deltaTime,
+                    enemyInput
+                )
+
+                if (enemyInput.pointer.pressed) {
+                    enemy.debugShotTarget = {
+                        ...enemyInput.pointer.position
+                    }
+
+                    const shotData = enemy.shoot()
+
+                    if (shotData) {
+                        this.bullets.push(new Bullet(shotData))
+                        this.playShotSound()
+                    }
                 }
             });
 
@@ -194,15 +204,19 @@ export class Game {
 
             this.checkBulletVsEnemy();
             this.checkBulletVsPlayer();
+            this.collectAmmoPickups();
 
             this.cleanupEntities();
 
             this.score = this.enemiesKilled * 10
 
-            this.updateHUD(mousePosition)
+            this.updateHUD(input)
         }
 
-        if (this.state === "stageSummary" && keysPressed[" "]) {
+        if (
+            this.state === "stageSummary" &&
+            (input.keyboard.pressed[" "] || input.touchButtons.pressed.A)
+        ) {
             this.continueAfterStage()
         }
     }
@@ -227,6 +241,10 @@ export class Game {
             bullet.draw(context)
         })
 
+        this.ammoPickups.forEach(pickup => {
+            pickup.draw(context)
+        })
+
         // CAPA 3 - Interfaz
         this.hud.draw(canvas, context)
 
@@ -234,6 +252,7 @@ export class Game {
 
         if (this.debug) {
             this.drawSelfDebug(context, canvas)
+            this.drawEnemyAimDebug(context)
         }
 
         if (this.state === "ready") {
@@ -258,6 +277,41 @@ export class Game {
             0,
             canvas.height - 15
         )
+    }
+
+    drawEnemyAimDebug(context) {
+        this.enemies.forEach(enemy => {
+            const target = enemy.debugShotTarget
+
+            if (!target) {
+                return
+            }
+
+            context.save()
+            context.strokeStyle = "#ff00ff"
+            context.fillStyle = "#ff00ff"
+            context.lineWidth = 2
+
+            context.beginPath()
+            context.moveTo(enemy.position.x, enemy.position.y)
+            context.lineTo(target.x, target.y)
+            context.stroke()
+
+            context.beginPath()
+            context.moveTo(target.x - 8, target.y)
+            context.lineTo(target.x + 8, target.y)
+            context.moveTo(target.x, target.y - 8)
+            context.lineTo(target.x, target.y + 8)
+            context.stroke()
+
+            context.font = "12px Arial"
+            context.fillText(
+                "AIM",
+                target.x + 10,
+                target.y - 10
+            )
+            context.restore()
+        })
     }
 
     checkBulletVsEnemy() {
@@ -299,21 +353,33 @@ export class Game {
 
     cleanupEntities() {
         this.bullets = this.bullets.filter((bullet) => bullet.isAlive);
+        this.ammoPickups = this.ammoPickups.filter(
+            pickup => pickup.isActive
+        )
         this.enemies = this.enemies.filter((enemy) => enemy.isAlive);
+
+        this.enemyIAs.forEach((ai, enemy) => {
+            if (!enemy.isAlive) {
+                this.enemyIAs.delete(enemy)
+            }
+        })
 
     }
 
-    updateHUD(mousePosition) {
+    updateHUD(input) {
         const enemiesDefeated =
             this.stage.spawnedEnemies - this.enemies.length
 
         this.hud.update(
             this.player.life,
             this.score,
-            mousePosition,
+            input.pointer.position,
             enemiesDefeated,
             this.stage.totalEnemies,
-            this.stage
+            this.stage,
+            this.player.ammo,
+            this.player.maxAmmo,
+            input
         )
     }
 
@@ -360,12 +426,51 @@ export class Game {
                 event.amount
             )
 
-            this.enemies.push(
-                new Player(false, false, position.x, position.y)
-            )
+            const enemy = new Player(false, false, position.x, position.y)
+            const ai = new IA(enemy, this.player)
+
+            this.enemies.push(enemy)
+            this.enemyIAs.set(enemy, ai)
 
             this.stage.spawnedEnemies++
         }
+    }
+
+    spawnAmmo(event) {
+        if (this.ammoPickups.length >= 3) {
+            return
+        }
+
+        this.ammoPickups.push(
+            new AmmoPickup(
+                this.getAmmoSpawnPosition(),
+                event.amount
+            )
+        )
+    }
+
+    getAmmoSpawnPosition() {
+        const margin = 60
+
+        return {
+            x: margin + Math.random() * (this.worldBounds.width - margin * 2),
+            y: margin + Math.random() * (this.worldBounds.height - margin * 2)
+        }
+    }
+
+    collectAmmoPickups() {
+        this.ammoPickups.forEach(pickup => {
+            if (
+                pickup.isActive &&
+                this.collision.checkAABB(this.player, pickup)
+            ) {
+                this.player.ammo = Math.min(
+                    this.player.maxAmmo,
+                    this.player.ammo + pickup.amount
+                )
+                pickup.isActive = false
+            }
+        })
     }
 
     getSpawnPosition(side, index, amount) {
@@ -412,11 +517,13 @@ export class Game {
         this.player.tank.hp = 5
         this.player.life = this.player.tank.hp
         this.player.isAlive = true
+        this.player.ammo = this.player.maxAmmo
+        this.ammoPickups = []
         this.enemies = []
         this.bullets = []
         this.stateAfterReady = "running"
         this.state = "ready"
-        this.updateHUD(this.hud.mousePosition)
+        this.enemyIAs.clear()
     }
 
     prepareToContinue() {
@@ -443,7 +550,9 @@ export class Game {
     destroyEntities() {
         this.allies = []
         this.bullets = []
+        this.ammoPickups = []
         this.enemies = []
+        this.enemyIAs.clear()
     }
 
     /// DRAWS
@@ -482,7 +591,7 @@ export class Game {
 
         context.font = "bold 20px Arial"
         context.fillText(
-            "Press Space to Start",
+            "Press A to continue",
             divDimensions.w / 2 - 95,
             divDimensions.h / 2
         )
@@ -508,7 +617,7 @@ export class Game {
         context.fillStyle = "#fff"
         context.font = "20px Arial"
         context.fillText(`Score: ${this.score}`, centerX, centerY)
-        context.fillText("Press Space to Continue", centerX, centerY + 80)
+        context.fillText("Press A to Continue", centerX, centerY + 80)
         context.restore()
     }
 

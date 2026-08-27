@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tanks Map Editor</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body>
+    <main class="app-shell">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">TANKS / WORKSHOP</p>
+                <h1>Map editor</h1>
+            </div>
+            <div class="top-actions">
+                <label class="stage-name">
+                    <span>Stage name</span>
+                    <input id="stageName" value="Untitled stage" maxlength="32">
+                </label>
+                <button id="clearMap" class="button button-quiet" type="button">Clear</button>
+                <button id="exportMap" class="button button-primary" type="button">Export JSON</button>
+                <label class="button button-quiet file-button">
+                    Import JSON
+                    <input id="importMap" type="file" accept="application/json,.json">
+                </label>
+            </div>
+        </header>
+
+        <section class="workspace">
+            <aside class="panel palette-panel">
+                <div class="panel-heading">
+                    <span class="panel-kicker">Palette</span>
+                    <span id="activeToolLabel">Ground</span>
+                </div>
+                <div class="tool-grid">
+                    <button class="tool is-active" data-tool="ground" type="button"><span
+                            class="tool-icon ground-icon"></span><span>Ground</span></button>
+                    <button class="tool" data-tool="tree" type="button"><span
+                            class="tool-icon tree-icon"></span><span>Tree</span></button>
+                    <button class="tool" data-tool="rock" type="button"><span
+                            class="tool-icon rock-icon"></span><span>Rock</span></button>
+                    <button class="tool" data-tool="ammo" type="button"><span
+                            class="tool-icon ammo-icon">+</span><span>Ammo</span></button>
+                    <button class="tool" data-tool="collision" type="button"><span
+                            class="tool-icon collision-icon"></span><span>Collision</span></button>
+                    <button class="tool" data-tool="eraser" type="button"><span
+                            class="tool-icon eraser-icon"></span><span>Eraser</span></button>
+                </div>
+                <div class="panel-section">
+                    <span class="panel-kicker">Background</span>
+                    <select id="backgroundSelect">
+                        <option value="bg_stage1.png">First contact</option>
+                        <option value="bg_stage2.png">Border patrol</option>
+                        <option value="bg_stage3.png">Iron passage</option>
+                        <option value="bg_stage4.png">Four fronts</option>
+                        <option value="bg_stage5.png">Siege line</option>
+                        <option value="bg_stage6.png">Last stand</option>
+                    </select>
+                </div>
+                <div class="hint"><kbd>1</kbd>-<kbd>6</kbd> tools <kbd>G</kbd> grid <kbd>Ctrl</kbd> + <kbd>Z</kbd> undo
+                </div>
+            </aside>
+
+            <section class="canvas-wrap">
+                <div class="canvas-toolbar">
+                    <span id="canvasStatus">20 x 20 grid</span>
+                    <label class="zoom-control">Zoom <input id="zoom" type="range" min="60" max="140"
+                            value="100"><output id="zoomValue">100%</output></label>
+                    <button id="toggleGrid" class="icon-button is-active" type="button"
+                        title="Toggle grid">Grid</button>
+                </div>
+                <div class="canvas-stage">
+                    <canvas id="mapCanvas" width="800" height="800"></canvas>
+                </div>
+            </section>
+
+            <aside class="panel inspector-panel">
+                <div class="panel-heading">
+                    <span class="panel-kicker">Stage data</span>
+                    <span class="status-dot">Ready</span>
+                </div>
+                <div class="stat-list">
+                    <div><span>Objects</span><strong id="objectCount">0</strong></div>
+                    <div><span>Colliders</span><strong id="colliderCount">0</strong></div>
+                    <div><span>Ammo crates</span><strong id="ammoCount">0</strong></div>
+                </div>
+                <div class="panel-section">
+                    <span class="panel-kicker">Selected object</span>
+                    <div id="selectionInfo" class="selection-info">Nothing selected</div>
+                </div>
+                <div class="panel-section export-note">
+                    <span class="panel-kicker">Output</span>
+                    <p>Exports positions in canvas coordinates with collision rectangles ready for the game stage
+                        format.</p>
+                </div>
+            </aside>
+        </section>
+    </main>
+    <script src="./editor.js"></script>
+</body>
+
+</html>

@@ -8,11 +8,14 @@ export class Stage {
             triggered: false
         }))
         this.totalEnemies = this.events.reduce(
-            (total, event) => total + event.amount,
+            (total, event) => event.type === "spawnEnemy"
+                ? total + event.amount
+                : total,
             0
         )
         this.timeLimit = stage.timeLimit
         this.elapsedTime = 0
+        this.nextAmmoSpawnTime = 10
         this.backgroundColor = stage.bgColor || "#263238"
         this.backgroundLoaded = false
         this.backgroundImage = new Image()
@@ -78,6 +81,14 @@ export class Stage {
         pendingEvents.forEach(event => {
             event.triggered = true
         })
+
+        while (this.elapsedTime >= this.nextAmmoSpawnTime) {
+            pendingEvents.push({
+                type: "spawnAmmo",
+                amount: 5
+            })
+            this.nextAmmoSpawnTime += 10
+        }
 
         if (playerLife <= 0) {
             this.finish("failed")
