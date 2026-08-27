@@ -56,11 +56,8 @@ export class Bullet {
     /// UTILITIES
 
     calculateFinalSpeed(initialSpeed, speedPlus) {
-        console.log(this.team)
         const penalization = this.team === "ally" ? 1 : 0.5
-
         return initialSpeed * speedPlus * penalization
-
     }
 }
 

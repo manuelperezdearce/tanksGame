@@ -16,6 +16,7 @@ export class Stage {
         this.timeLimit = stage.timeLimit
         this.elapsedTime = 0
         this.nextAmmoSpawnTime = 10
+        this.nextLiveSpawnTime = 1
         this.backgroundColor = stage.bgColor || "#263238"
         this.backgroundLoaded = false
         this.backgroundImage = new Image()
@@ -88,6 +89,14 @@ export class Stage {
                 amount: 5
             })
             this.nextAmmoSpawnTime += 10
+        }
+
+        while (this.elapsedTime >= this.nextLiveSpawnTime) {
+            pendingEvents.push({
+                type: "spawnLive",
+                amount: 1
+            })
+            this.nextLiveSpawnTime += 10
         }
 
         if (playerLife <= 0) {

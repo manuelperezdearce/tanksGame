@@ -11,6 +11,7 @@ export class Player {
         this.tank = new Tank(this.position)
         this.canon = new Canon(this.tank.mount)
         this.tank.hp = this.isAlly ? 5 : 2
+        this.maxLife = 5
         this.life = this.tank.hp
         this.maxAmmo = isHuman ? 10 : 8
         this.ammo = this.maxAmmo
@@ -208,6 +209,14 @@ export class Player {
         this.tank.takeDamge(bulletDamage)
         this.life = this.tank.hp
         if (this.life <= 0) { this.isAlive = false }
+    }
+
+    recoverLife(amount) {
+        this.tank.hp = Math.min(
+            this.maxLife,
+            this.tank.hp + amount
+        )
+        this.life = this.tank.hp
     }
 
     getHitbox() {
