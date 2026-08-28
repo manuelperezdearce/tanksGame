@@ -3,7 +3,14 @@ export class Controller {
 
         this.canvas = inputElements.canvas
         this.touchButtons = inputElements.touchButtons
-        this.joystick = inputElements.joystick
+        this.joysticks = Array.from(inputElements.joysticks || [])
+
+        this.joystickL = this.joysticks?.find(
+            joystick => joystick.dataset.joystick === "L"
+        )
+        this.joystickR = this.joysticks?.find(
+            joystick => joystick.dataset.joystick === "R"
+        )
 
         this.input = {
             keyboard: {
@@ -15,7 +22,12 @@ export class Controller {
                 held: false,
                 pressed: false
             },
-            joystick: {
+            joystickL: {
+                active: false,
+                direction: null,
+                magnitude: 0
+            },
+            joystickR: {
                 active: false,
                 direction: null,
                 magnitude: 0
@@ -29,7 +41,10 @@ export class Controller {
         this.detectarTeclado()
         this.detectarPuntero()
         this.detectarControlesTactiles()
-        this.detectarJoystick()
+        this.detectarJoystick(this.joystickL, this.input.joystickL)
+        this.detectarJoystick(this.joystickR, this.input.joystickR)
+
+        this.input.joystick = this.input.joystickL
     }
 
     beginFrame() {
@@ -125,8 +140,7 @@ export class Controller {
         })
     }
 
-    detectarJoystick() {
-        const joystick = this.joystick
+    detectarJoystick(joystick, joystickInput) {
 
         if (!joystick) {
             return
@@ -139,9 +153,9 @@ export class Controller {
             activePointerId = null
             knob.style.transform = "translate(-50%, -50%)"
 
-            this.input.joystick.active = false
-            this.input.joystick.direction = null
-            this.input.joystick.magnitude = 0
+            joystickInput.active = false
+            joystickInput.direction = null
+            joystickInput.magnitude = 0
         }
 
         const updateJoystick = (event) => {
@@ -177,9 +191,9 @@ export class Controller {
                 `calc(-50% + ${positionY}px))`
 
             if (distance <= deadZone) {
-                this.input.joystick.active = true
-                this.input.joystick.direction = null
-                this.input.joystick.magnitude = 0
+                joystickInput.active = true
+                joystickInput.direction = null
+                joystickInput.magnitude = 0
                 return
             }
 
@@ -187,12 +201,12 @@ export class Controller {
                 (limitedDistance - deadZone) /
                 (maxDistance - deadZone)
 
-            this.input.joystick.active = true
-            this.input.joystick.direction = {
+            joystickInput.active = true
+            joystickInput.direction = {
                 x: deltaX / distance,
                 y: deltaY / distance
             }
-            this.input.joystick.magnitude = Math.min(
+            joystickInput.magnitude = Math.min(
                 1,
                 Math.max(0, magnitude)
             )
