@@ -93,7 +93,7 @@ export class Game {
                 if (event.type === "spawnAmmo") {
                     this.spawnAmmo(event)
                 }
-                if (event.type === "spawnLive") {
+                if (event.type === "spawnLife") {
                     this.spawnLife(event)
                 }
             })
@@ -110,7 +110,8 @@ export class Game {
             );
 
             if (
-                input.pointer.pressed
+                input.pointer.pressed ||
+                input.touchButtons.pressed.X
             ) {
 
                 const shotData = this.player.shoot()

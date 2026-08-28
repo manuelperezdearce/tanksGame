@@ -5,6 +5,7 @@ export class Canon {
         this.width = 25
         this.height = 50
         this.speedPlus = 1.6
+        this.rotationSpeed = 2
         this.color = "#054d1d"
         this.angle = 0
         this.canonImage = new Image()
@@ -32,8 +33,8 @@ export class Canon {
 
     }
 
-    update(mousePosition, canonMount) {
-        this.calcularPosicionCanon(mousePosition, canonMount)
+    update(mousePosition, canonMount, deltaTime) {
+        this.calcularPosicionCanon(mousePosition, canonMount, deltaTime)
         this.calcularPosicionSalidaCanon()
         // if (this.muzzleFlashTime > 0) {
         //     this.muzzleFlashTime -= deltaTime
@@ -102,28 +103,30 @@ export class Canon {
         return this.exitPosition
     }
 
-    calcularPosicionCanon(mousePosition, canonMount) {
+    calcularPosicionCanon(mousePosition, canonMount, deltaTime) {
 
         this.startPosition.x = canonMount.x;
         this.startPosition.y = canonMount.y;
 
-        this.direction.x = mousePosition.x - this.startPosition.x;
-        this.direction.y = mousePosition.y - this.startPosition.y;
+        const targetDirectionX = mousePosition.x - this.startPosition.x;
+        const targetDirectionY = mousePosition.y - this.startPosition.y;
+        const targetAngle = Math.atan2(
+            targetDirectionY,
+            targetDirectionX
+        );
+        const angleDifference = Math.atan2(
+            Math.sin(targetAngle - this.angle),
+            Math.cos(targetAngle - this.angle)
+        );
+        const maxRotation = this.rotationSpeed * deltaTime;
 
-        this.angle = Math.atan2(
-            this.direction.y,
-            this.direction.x
+        this.angle += Math.max(
+            -maxRotation,
+            Math.min(maxRotation, angleDifference)
         );
 
-        const length = Math.sqrt(
-            this.direction.x ** 2 +
-            this.direction.y ** 2
-        );
-
-        if (length > 0) {
-            this.direction.x = this.direction.x / length;
-            this.direction.y = this.direction.y / length;
-        }
+        this.direction.x = Math.cos(this.angle);
+        this.direction.y = Math.sin(this.angle);
     }
 
 }
