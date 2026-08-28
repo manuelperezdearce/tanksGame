@@ -10,13 +10,13 @@ import { Stage } from "./stages/stage.js";
 import { Collision } from "./collision.js";
 
 export class Game {
-    constructor(effectsEnabled = true, effectsVolume = 0.3) {
+    constructor(effectsEnabled = true, effectsVolume = 0.3, hudMode = "full") {
 
 
         this.currentStageid = 1
         // Iniciar Entidades
         this.stage = new Stage(stages[this.currentStageid])
-        this.hud = new HUD()
+        this.hud = new HUD(hudMode)
         this.player = new Player(true, true, 500, 500)
         this.collision = new Collision()
         // allies.push(player)
@@ -429,6 +429,10 @@ export class Game {
         this.shotSounds.forEach(sound => {
             sound.volume = volume
         })
+    }
+
+    setHudMode(mode) {
+        this.hud.mode = mode
     }
 
     spawnEnemies(event) {

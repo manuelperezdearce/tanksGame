@@ -1,6 +1,6 @@
 export class Menu {
     constructor() {
-        this.dimensions = { w: 360, h: 460 }
+        this.dimensions = { w: 360, h: 520 }
         this.position = { x: 0, y: 0 }
 
         this.state = "main"
@@ -31,6 +31,11 @@ export class Menu {
             {
                 menuName: "About",
                 appState: "about",
+                isAvailable: true
+            },
+            {
+                menuName: "How to Play",
+                appState: "how to play",
                 isAvailable: true
             }
         ]

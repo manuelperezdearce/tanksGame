@@ -1,6 +1,6 @@
 export class HUD {
-    constructor() {
-        this.visible = true
+    constructor(mode = "full") {
+        this.mode = mode
         this.playerLife = 0
         this.score = 0
         this.enemiesDefeated = 0
@@ -11,6 +11,14 @@ export class HUD {
 
         this.heartImage = new Image()
         this.heartImage.src = "./assets/common/heart-64.png"
+        this.bulletImage = new Image()
+        this.bulletImage.src = "./assets/bullets/bullets.png"
+        this.bulletSource = {
+            x: 100,
+            y: 190,
+            w: 130,
+            h: 280
+        }
 
         this.stage = {
             id: 0,
@@ -34,7 +42,7 @@ export class HUD {
         input
     ) {
         if (input?.touchButtons?.pressed?.select) {
-            this.toggleVisibility()
+            this.cycleMode()
         }
 
         this.playerLife = playerLife
@@ -51,12 +59,19 @@ export class HUD {
 
     /// DRAW ////
 
-    toggleVisibility() {
-        this.visible = !this.visible
+    cycleMode() {
+        const modes = ["full", "reduced", "hidden"]
+        const currentIndex = modes.indexOf(this.mode)
+        this.mode = modes[(currentIndex + 1) % modes.length]
     }
 
     draw(canvas, context) {
-        if (!this.visible) {
+        if (this.mode === "hidden") {
+            return
+        }
+
+        if (this.mode === "reduced") {
+            this.drawReduced(canvas, context)
             return
         }
 
@@ -71,22 +86,8 @@ export class HUD {
             ? "#ff3b30"
             : "#ffffff"
 
-        if (
-            this.heartImage.complete &&
-            this.heartImage.naturalWidth > 0
-        ) {
-            context.drawImage(
-                this.heartImage,
-                25,
-                20,
-                36,
-                36
-            )
-            context.fillText(`x ${this.playerLife}`, 70, 43)
-        }
-        else {
-            context.fillText(`LIFE ${this.playerLife}`, 30, 43)
-        }
+        this.drawLife(context, 25, 20, 36)
+        context.fillText(`x ${this.playerLife}`, 70, 43)
 
         context.fillStyle = "#ffffff"
         context.fillText(`SCORE ${this.score}`, 30, 77)
@@ -97,11 +98,8 @@ export class HUD {
             : this.ammo <= 2
                 ? "#d6c900"
                 : "#ffffff"
-        context.fillText(
-            `AMMO ${this.ammo} / ${this.maxAmmo}`,
-            180,
-            77
-        )
+        this.drawAmmo(context, 180, 53, 18, 30)
+        context.fillText(`${this.ammo} / ${this.maxAmmo}`, 205, 77)
 
         context.textAlign = "center"
         context.fillText(
@@ -125,6 +123,62 @@ export class HUD {
         context.restore()
 
         this.drawPointer(context)
+    }
+
+    drawReduced(canvas, context) {
+        context.save()
+        context.font = "bold 20px Arial"
+        context.textAlign = "left"
+        context.fillStyle = "#ffffff"
+        context.fillText(`SCORE ${this.score}`, 24, 35)
+        context.textAlign = "right"
+        context.fillText(
+            `TIME ${this.stage.remainingTime}s`,
+            canvas.width - 24,
+            35
+        )
+        context.textAlign = "left"
+
+        const bottomY = canvas.height - 42
+
+        context.fillStyle = this.playerLife <= 2
+            ? "#ff3b30"
+            : "#ffffff"
+        this.drawLife(context, canvas.width - 230, bottomY - 10, 36)
+        context.fillText(`x ${this.playerLife}`, canvas.width - 188, bottomY + 15)
+
+        context.fillStyle = this.ammo === 0
+            ? "#ff3b30"
+            : this.ammo <= 2
+                ? "#d6c900"
+                : "#ffffff"
+        this.drawAmmo(context, canvas.width - 125, bottomY - 10, 18, 30)
+        context.fillText(`${this.ammo}/${this.maxAmmo}`, canvas.width - 100, bottomY + 15)
+        context.restore()
+
+        this.drawPointer(context)
+    }
+
+    drawLife(context, x, y, size) {
+        if (this.heartImage.complete && this.heartImage.naturalWidth > 0) {
+            context.drawImage(this.heartImage, x, y, size, size)
+        }
+    }
+
+    drawAmmo(context, x, y, width, height) {
+        if (this.bulletImage.complete && this.bulletImage.naturalWidth > 0) {
+            context.drawImage(
+                this.bulletImage,
+                this.bulletSource.x,
+                this.bulletSource.y,
+                this.bulletSource.w,
+                this.bulletSource.h,
+                x,
+                y,
+                width,
+                height
+            )
+        }
     }
 
     drawPointer(context) {
