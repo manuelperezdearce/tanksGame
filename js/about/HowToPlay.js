@@ -1,4 +1,4 @@
-export class About {
+export class HowToPlay {
     constructor() {
         this.dimensions = { w: 360, h: 460 }
     }
@@ -34,25 +34,14 @@ export class About {
         context.fillStyle = "#ffffff"
         context.font = "bold 38px Arial"
         context.textAlign = "center"
-        context.fillText("About", this.dimensions.w / 2, 70)
+        context.fillText("How to Play", this.dimensions.w / 2, 70)
 
-        context.font = "21px Arial"
-        context.fillText("Tanks", this.dimensions.w / 2, 150)
-        context.font = "16px Arial"
-        context.fillText(
-            "Destroy all enemy tanks before time runs out.",
-            this.dimensions.w / 2,
-            190
-        )
-        context.fillText(
-            "Collect ammo and lives to survive.",
-            this.dimensions.w / 2,
-            215
-        )
-
-        context.fillStyle = "#d6c900"
-        context.fillText("Developed by SiriPdA", this.dimensions.w / 2, 280)
-        context.fillText("Version 1.0.0", this.dimensions.w / 2, 305)
+        context.font = "18px Arial"
+        context.fillText("L stick: Move tank", this.dimensions.w / 2, 150)
+        context.fillText("R stick: Aim cannon", this.dimensions.w / 2, 185)
+        context.fillText("X: Fire", this.dimensions.w / 2, 220)
+        context.fillText("Start: Pause", this.dimensions.w / 2, 255)
+        context.fillText("Select: HUD mode", this.dimensions.w / 2, 285)
 
         context.fillStyle = "#d24a38"
         context.font = "bold 16px Arial"

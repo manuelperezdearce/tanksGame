@@ -3,6 +3,7 @@ import { Menu } from "./menu/menu.js";
 import { Score } from "./score/score.js";
 import { Settings } from "./settings/Settings.js";
 import { About } from "./about/About.js";
+import { HowToPlay } from "./about/HowToPlay.js";
 import { Controller } from "./controller/Controller.js";
 
 export class App {
@@ -18,6 +19,7 @@ export class App {
         this.score = new Score()
         this.settings = new Settings().load()
         this.about = new About()
+        this.howToPlay = new HowToPlay()
         this.game = null
 
         this.musicEnabled = this.settings.music.enabled
@@ -85,7 +87,8 @@ export class App {
                 if (selectedOption.appState === "new game") {
                     this.game = new Game(
                         this.effectsEnabled,
-                        this.effectsVolume
+                        this.effectsVolume,
+                        this.settings.hudMode
                     )
                     this.gameMusic.currentTime = 0
                     this.setContinueAvailable(false)
@@ -101,6 +104,9 @@ export class App {
                 }
                 if (selectedOption.appState === "about") {
                     this.setState("about")
+                }
+                if (selectedOption.appState === "how to play") {
+                    this.setState("how to play")
                 }
 
 
@@ -160,6 +166,7 @@ export class App {
                         this.effectsEnabled,
                         this.effectsVolume
                     )
+                    this.game.setHudMode(this.settings.hudMode)
                 }
 
                 this.settings.save()
@@ -183,6 +190,17 @@ export class App {
             }
         }
 
+        else if (this.state === "how to play") {
+            const howToPlayAction = this.howToPlay.update(
+                input.touchButtons,
+                input.keyboard.pressed
+            )
+
+            if (howToPlayAction?.action === "back") {
+                this.setState("menu")
+            }
+        }
+
         if (input.keyboard.pressed.Escape) {
 
             if (this.state === "score") {
@@ -200,6 +218,9 @@ export class App {
                 this.setState("menu")
             }
             else if (this.state === "about") {
+                this.setState("menu")
+            }
+            else if (this.state === "how to play") {
                 this.setState("menu")
             }
         }
@@ -227,6 +248,12 @@ export class App {
         }
         if (this.state === "about") {
             this.about.draw(this.context, {
+                x: this.canvas.width / 2,
+                y: this.canvas.height / 2
+            })
+        }
+        if (this.state === "how to play") {
+            this.howToPlay.draw(this.context, {
                 x: this.canvas.width / 2,
                 y: this.canvas.height / 2
             })

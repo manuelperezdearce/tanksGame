@@ -13,13 +13,15 @@ export class Settings {
             enabled: values.effects?.enabled ?? true,
             volume: this.normalizeVolume(values.effects?.volume ?? 0.3)
         }
+
+        this.hudMode = this.normalizeHudMode(values.hudMode ?? "full")
     }
 
     update(input) {
         const touchButtons = input.touchButtons
         const keysPressed = input.keyboard.pressed
 
-        const optionsLength = 5
+        const optionsLength = 6
 
         if (
             keysPressed.ArrowDown ||
@@ -82,6 +84,11 @@ export class Settings {
         }
 
         if (this.selectedIndex === 4) {
+            this.changeHudMode(1)
+            return { action: "changed" }
+        }
+
+        if (this.selectedIndex === 5) {
             return { action: "back" }
         }
 
@@ -99,13 +106,19 @@ export class Settings {
             return { action: "changed" }
         }
 
+        if (this.selectedIndex === 4) {
+            this.changeHudMode(direction)
+            return { action: "changed" }
+        }
+
         return null
     }
 
     load() {
         const defaults = {
             music: { enabled: true, volume: 0.3 },
-            effects: { enabled: true, volume: 0.3 }
+            effects: { enabled: true, volume: 0.3 },
+            hudMode: "full"
         }
 
         try {
@@ -130,6 +143,10 @@ export class Settings {
                     values.effects?.volume ?? defaults.effects.volume
                 )
             }
+
+            this.hudMode = this.normalizeHudMode(
+                values.hudMode ?? defaults.hudMode
+            )
         }
         catch (error) {
             console.log("Error loading settings", error)
@@ -152,7 +169,8 @@ export class Settings {
             storage.version = 1
             storage.settings = {
                 music: { ...this.music },
-                effects: { ...this.effects }
+                effects: { ...this.effects },
+                hudMode: this.hudMode
             }
             storage.scores = Array.isArray(storage.scores)
                 ? storage.scores
@@ -188,6 +206,20 @@ export class Settings {
             this.effects.volume,
             direction
         )
+    }
+
+    changeHudMode(direction) {
+        const modes = ["full", "reduced", "hidden"]
+        const currentIndex = modes.indexOf(this.hudMode)
+        this.hudMode = modes[
+            (currentIndex + direction + modes.length) % modes.length
+        ]
+    }
+
+    normalizeHudMode(mode) {
+        return ["full", "reduced", "hidden"].includes(mode)
+            ? mode
+            : "full"
     }
 
     changeVolume(currentVolume, direction) {
@@ -227,6 +259,7 @@ export class Settings {
             `Music Volume: ${Math.round(this.music.volume * 100)}%`,
             `Effects: ${this.effects.enabled ? "ON" : "OFF"}`,
             `Effects Volume: ${Math.round(this.effects.volume * 100)}%`,
+            `HUD: ${this.hudMode.toUpperCase()}`,
             "Back"
         ]
 

@@ -5,18 +5,18 @@ import { Player } from "./entities/player.js";
 import { IA } from "./entities/IA.js";
 import { HUD } from "./entities/hud.js";
 import { Bullet } from "./entities/bullet.js";
-import { AmmoPickup } from "./entities/ammoPickup.js";
+import { AmmoPickup, LifePickup } from "./entities/Pickup.js";
 import { Stage } from "./stages/stage.js";
 import { Collision } from "./collision.js";
 
 export class Game {
-    constructor(effectsEnabled = true, effectsVolume = 0.3) {
+    constructor(effectsEnabled = true, effectsVolume = 0.3, hudMode = "full") {
 
 
         this.currentStageid = 1
         // Iniciar Entidades
         this.stage = new Stage(stages[this.currentStageid])
-        this.hud = new HUD()
+        this.hud = new HUD(hudMode)
         this.player = new Player(true, true, 500, 500)
         this.collision = new Collision()
         // allies.push(player)
@@ -33,6 +33,7 @@ export class Game {
         this.allies = []
         this.bullets = []
         this.ammoPickups = []
+        this.lifePickups = []
         this.enemies = []
         this.enemyIAs = new Map()
         this.worldBounds = { width: 800, height: 800 }
@@ -92,6 +93,9 @@ export class Game {
                 if (event.type === "spawnAmmo") {
                     this.spawnAmmo(event)
                 }
+                if (event.type === "spawnLife") {
+                    this.spawnLife(event)
+                }
             })
 
             if (this.stage.state === "finished") {
@@ -106,7 +110,8 @@ export class Game {
             );
 
             if (
-                input.pointer.pressed
+                input.pointer.pressed ||
+                input.touchButtons.pressed.X
             ) {
 
                 const shotData = this.player.shoot()
@@ -205,6 +210,7 @@ export class Game {
             this.checkBulletVsEnemy();
             this.checkBulletVsPlayer();
             this.collectAmmoPickups();
+            this.collectLifePickups();
 
             this.cleanupEntities();
 
@@ -242,6 +248,10 @@ export class Game {
         })
 
         this.ammoPickups.forEach(pickup => {
+            pickup.draw(context)
+        })
+
+        this.lifePickups.forEach(pickup => {
             pickup.draw(context)
         })
 
@@ -356,6 +366,9 @@ export class Game {
         this.ammoPickups = this.ammoPickups.filter(
             pickup => pickup.isActive
         )
+        this.lifePickups = this.lifePickups.filter(
+            pickup => pickup.isActive
+        )
         this.enemies = this.enemies.filter((enemy) => enemy.isAlive);
 
         this.enemyIAs.forEach((ai, enemy) => {
@@ -418,6 +431,10 @@ export class Game {
         })
     }
 
+    setHudMode(mode) {
+        this.hud.mode = mode
+    }
+
     spawnEnemies(event) {
         for (let index = 0; index < event.amount; index++) {
             const position = this.getSpawnPosition(
@@ -443,13 +460,26 @@ export class Game {
 
         this.ammoPickups.push(
             new AmmoPickup(
-                this.getAmmoSpawnPosition(),
+                this.getPickupSpawnPosition(),
                 event.amount
             )
         )
     }
 
-    getAmmoSpawnPosition() {
+    spawnLife(event) {
+        if (this.lifePickups.length >= 3) {
+            return
+        }
+
+        this.lifePickups.push(
+            new LifePickup(
+                this.getPickupSpawnPosition(),
+                event.amount
+            )
+        )
+    }
+
+    getPickupSpawnPosition() {
         const margin = 60
 
         return {
@@ -468,6 +498,17 @@ export class Game {
                     this.player.maxAmmo,
                     this.player.ammo + pickup.amount
                 )
+                pickup.isActive = false
+            }
+        })
+    }
+    collectLifePickups() {
+        this.lifePickups.forEach(pickup => {
+            if (
+                pickup.isActive &&
+                this.collision.checkAABB(this.player, pickup)
+            ) {
+                this.player.recoverLife(pickup.amount)
                 pickup.isActive = false
             }
         })
@@ -519,6 +560,7 @@ export class Game {
         this.player.isAlive = true
         this.player.ammo = this.player.maxAmmo
         this.ammoPickups = []
+        this.lifePickups = []
         this.enemies = []
         this.bullets = []
         this.stateAfterReady = "running"

@@ -1,14 +1,13 @@
 export class Tank {
 
-    constructor(playerPosition) {
+    constructor(playerPosition, team) {
 
         this.width = 40
         this.height = 53
         this.hp = 1
-
-        this.speed = 100
-        this.rotationSpeed = 1
-
+        this.team = team
+        this.speed = this.team === "ally" ? 100 : 80
+        this.rotationSpeed = this.team === "ally" ? 2 : 1
         this.centerOf = {
             x: playerPosition.x,
             y: playerPosition.y

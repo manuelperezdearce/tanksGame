@@ -4,17 +4,19 @@ import { Canon } from "./canon.js"
 export class Player {
     constructor(isAlly, isHuman, positionX, positionY) {
         this.isAlly = isAlly
-        this.team = ""
+        this.team = isAlly ? "ally" : "enemy"
         this.isHuman = isHuman
         this.humanOrCPU = ""
         this.position = { x: positionX, y: positionY }
-        this.tank = new Tank(this.position)
+        this.tank = new Tank(this.position, this.team)
         this.canon = new Canon(this.tank.mount)
         this.tank.hp = this.isAlly ? 5 : 2
+        this.maxLife = 5
         this.life = this.tank.hp
         this.maxAmmo = isHuman ? 10 : 8
         this.ammo = this.maxAmmo
-        this.pointer = { x: 0, y: 0 }
+        this.pointer = { x: positionX + 200, y: positionY }
+        this.joystickRAiming = false
         this.dimensions = { w: this.tank.width, h: this.tank.height }
         this.speed = this.tank.speed
         this.rotationSpeed = this.tank.rotationSpeed
@@ -36,7 +38,21 @@ export class Player {
             this.move(deltaTime, input.keyboard.held)
         }
 
-        this.aim(input.pointer.position)
+        if (input.joystickR?.active) {
+            if (input.joystickR.direction) {
+                const aimDistance = 200
+
+                this.pointer.x =
+                    this.position.x + input.joystickR.direction.x * aimDistance
+                this.pointer.y =
+                    this.position.y + input.joystickR.direction.y * aimDistance
+                this.joystickRAiming = true
+            }
+        } else if (!this.joystickRAiming) {
+            this.aim({
+                ...input.pointer.position
+            })
+        }
 
         this.tank.update(
             this.position,
@@ -45,7 +61,8 @@ export class Player {
 
         this.canon.update(
             this.pointer,
-            this.tank.canonMount
+            this.tank.canonMount,
+            deltaTime
         )
 
     }
@@ -54,7 +71,24 @@ export class Player {
 
         this.tank.draw(context, canvas)
         this.canon.draw(context, canvas)
+        if (this.isAlly) {
+            this.drawAim(context)
+        }
         this.drawSelf(context, canvas)
+    }
+
+    drawAim(context) {
+        context.save()
+        context.strokeStyle = "#ffffff"
+        context.lineWidth = 2
+        context.beginPath()
+        context.arc(this.pointer.x, this.pointer.y, 10, 0, Math.PI * 2)
+        context.moveTo(this.pointer.x - 16, this.pointer.y)
+        context.lineTo(this.pointer.x + 16, this.pointer.y)
+        context.moveTo(this.pointer.x, this.pointer.y - 16)
+        context.lineTo(this.pointer.x, this.pointer.y + 16)
+        context.stroke()
+        context.restore()
     }
 
     drawSelf(context, canvas) {
@@ -190,6 +224,7 @@ export class Player {
         this.pointer.x = mousePosition.x
         this.pointer.y = mousePosition.y
     }
+
     shoot() {
         if (this.ammo <= 0) {
             return null
@@ -208,6 +243,14 @@ export class Player {
         this.tank.takeDamge(bulletDamage)
         this.life = this.tank.hp
         if (this.life <= 0) { this.isAlive = false }
+    }
+
+    recoverLife(amount) {
+        this.tank.hp = Math.min(
+            this.maxLife,
+            this.tank.hp + amount
+        )
+        this.life = this.tank.hp
     }
 
     getHitbox() {

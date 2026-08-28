@@ -1,4 +1,4 @@
-# Tanks 1.1
+# Tanks 1.2
 
 Tanks es un juego 2D desarrollado con JavaScript vanilla y Canvas. El jugador controla un tanque, supera oleadas de enemigos manejados por una IA sencilla y registra su puntuación al finalizar la partida.
 
@@ -39,7 +39,13 @@ El proyecto fue construido como un MVP de portafolio, priorizando funcionalidad,
 - Ranking ordenado y persistente mediante `localStorage`.
 - Música diferenciada para menú y partida.
 - Efectos de sonido para los disparos.
-- Settings con controles independientes de música y efectos.
+- Settings con controles independientes de música, efectos y modo del HUD.
+- HUD completo, reducido u oculto, con cambio rápido mediante `Select`.
+- Vida y munición mostradas con iconos de corazón y bala.
+- Pickups de vidas y munición.
+- Apuntado independiente mediante stick derecho, con rotación suave del cañón.
+- Controles táctiles adaptados para portrait y landscape.
+- Pantallas independientes de About y How to Play.
 
 ## Controles
 
@@ -55,10 +61,13 @@ El proyecto fue construido como un MVP de portafolio, priorizando funcionalidad,
 
 | Acción | Control |
 | --- | --- |
+| Mover y girar | Stick L |
+| Apuntar | Stick R |
 | Avanzar y retroceder | `W` / `S` |
 | Girar | `A` / `D` |
-| Apuntar | Movimiento del mouse |
-| Disparar | Clic izquierdo |
+| Apuntar alternativa | Movimiento del mouse |
+| Disparar | `X` o clic izquierdo |
+| Cambiar modo del HUD | `Select` |
 | Comenzar o reanudar | `Espacio` |
 | Volver al menú | `Escape` |
 
@@ -78,7 +87,11 @@ El proyecto fue construido como un MVP de portafolio, priorizando funcionalidad,
 | Mover selección | `W` / `S` o flechas arriba/abajo |
 | Activar o desactivar | `Espacio` |
 | Cambiar volumen | `A` / `D` o flechas izquierda/derecha |
+| Cambiar modo del HUD | `A` / `D` o flechas izquierda/derecha |
 | Volver | `Escape` o seleccionar Back |
+
+En dispositivos táctiles, los controles se distribuyen a ambos lados del Canvas
+cuando el dispositivo está en orientación landscape.
 
 ## Objetivo
 
@@ -128,7 +141,7 @@ Menú
 El juego utiliza una estructura basada en clases con responsabilidades concretas:
 
 - `App`: administra el Canvas, el input, el game loop y las pantallas principales.
-- `Menu`: controla las opciones, Settings y la navegación del menú.
+- `Menu`: controla las opciones y la navegación del menú.
 - `Game`: coordina jugador, enemigos, balas, colisiones, HUD y progresión.
 - `Stage`: controla el tiempo, las oleadas, el resultado y el fondo de cada etapa. Si una imagen no carga, utiliza un color de respaldo.
 - `Player`: representa tanto al usuario como a los jugadores controlados por IA.
@@ -136,14 +149,16 @@ El juego utiliza una estructura basada en clases con responsabilidades concretas
 - `Canon`: apunta y genera los datos de cada disparo.
 - `Bullet`: representa y actualiza los proyectiles de ambos equipos.
 - `Collision`: comprueba intersecciones AABB y límites del mundo.
-- `HUD`: muestra vida, puntuación, enemigos y datos de la etapa.
+- `HUD`: muestra vida, puntuación, munición y datos de la etapa en varios modos.
+- `About`: muestra la información, autoría y versión del juego.
+- `HowToPlay`: muestra el objetivo y los controles de la partida.
 - `Score`: administra el ranking y su persistencia.
 - `EnterScore`: controla la introducción del nombre del jugador.
 
 ### Estados principales
 
 ```text
-App:   menu | game | score
+App:   menu | game | score | settings | about | how to play
 Game:  ready | running | stageSummary | finished
 Stage: running | finished
 Score: ranking | enterName
@@ -166,14 +181,19 @@ Stage result: completed | failed
 │   ├── tanks/
 │   └── turrets/
 ├── js/
-│   ├── entities/
-│   ├── stages/
-│   ├── app.js
-│   ├── collision.js
-│   ├── enterScore.js
-│   ├── game.js
-│   ├── menu.js
-│   └── score.js
+│   ├── about/
+│   │   ├── About.js
+│   │   └── HowToPlay.js
+│   ├── controller/Controller.js
+│   ├── game/
+│   │   ├── entities/
+│   │   ├── stages/
+│   │   ├── collision.js
+│   │   └── game.js
+│   ├── menu/menu.js
+│   ├── score/
+│   ├── settings/Settings.js
+│   └── app.js
 ├── index.html
 ├── main.js
 └── styles.css
@@ -195,7 +215,7 @@ Las preferencias y puntuaciones se guardan bajo una única clave:
 tanksStorage
 ```
 
-El almacenamiento contiene los settings de música y efectos junto con el ranking local.
+El almacenamiento contiene los settings de música, efectos y modo del HUD junto con el ranking local.
 
 ## Posibles mejoras
 

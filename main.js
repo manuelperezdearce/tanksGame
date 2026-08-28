@@ -2,13 +2,13 @@
 import { App } from "./js/app.js";
 
 const canvas = document.getElementById("gameCanvas")
-const joystick = document.querySelector("[data-joystick]")
+const joysticks = document.querySelectorAll("[data-joystick]")
 const touchButtons = document.querySelectorAll("[data-control]")
 
 const inputElements = {
     canvas,
     touchButtons,
-    joystick
+    joysticks
 }
 canvas.width = 800
 canvas.height = 800
